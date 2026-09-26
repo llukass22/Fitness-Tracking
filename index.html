@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#101110" />
+  <meta name="description" content="A simple home for your gym sessions." />
+  <title>Form — Your training space</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <svg class="svg-library" xmlns="http://www.w3.org/2000/svg"><defs>
+    <symbol id="arrow" viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"/></symbol>
+    <symbol id="chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="shoulders" viewBox="0 0 48 48"><path d="M19 14c0-7 10-7 10 0v5l8 4 4 13M19 19l-8 4-4 13M15 23l-2 13m20-13 2 13M19 19c0 7 10 7 10 0M17 27h14M18 36h12"/><path d="m7 25 4-2 4 1m18 0 4-1 4 2"/></symbol>
+    <symbol id="chest" viewBox="0 0 48 48"><path d="m17 12-4 7-6 4 4 17m20-28 4 7 6 4-4 17M17 12c2 5 12 5 14 0M13 20l3 18m19-18-3 18M16 23c3-3 6-3 8 0 2-3 5-3 8 0v8c-3 2-6 2-8-1-2 3-5 3-8 1M24 23v7"/></symbol>
+    <symbol id="back" viewBox="0 0 48 48"><path d="m17 11-3 8-7 5 4 16m20-29 3 8 7 5-4 16M17 11c2 4 12 4 14 0M14 19l4 19h12l4-19M24 17v22m-7-18 7 5 7-5m-13 9 6 5 6-5"/></symbol>
+    <symbol id="legs" viewBox="0 0 48 48"><path d="M15 9h18l-1 14-3 17h-7l2-17-2 17h-7l1-17-1-14ZM16 17h16M24 17v6M15 40h7m0 0h7"/></symbol>
+  </defs></svg>
+  <div class="app-shell">
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="Form home"><span class="brand-mark"><i></i><i></i><i></i></span>form<span class="brand-dot">.</span></a>
+      <span class="header-label">YOUR TRAINING SPACE</span>
+      <div class="profile" aria-label="Your profile">YOU<span></span></div>
+    </header>
+    <main>
+      <section class="intro">
+        <div><p class="eyebrow"><span></span> ONE SESSION AT A TIME</p><h1>Show up.<br class="mobile-break" /> Get stronger<span>.</span></h1><p class="intro-copy">A little progress, every time you train.</p></div>
+        <div class="intro-note"><span class="note-line"></span><p>YOUR ONLY COMPETITION<br /><strong>is who you were yesterday.</strong></p></div>
+      </section>
+      <div class="dashboard">
+        <section class="calendar-section" aria-labelledby="calendar-title">
+          <div class="section-heading"><h2 id="calendar-title">Your calendar</h2><span class="section-label">MAKE TIME FOR YOU</span></div>
+          <div class="calendar-card">
+            <div class="calendar-top"><div><p class="small-label">THE TRAINING JOURNAL</p><h3 id="month-title"></h3></div><div class="month-controls"><button id="previous-month" aria-label="Previous month"><svg><use href="#chevron"/></svg></button><button id="next-month" aria-label="Next month"><svg><use href="#chevron"/></svg></button></div></div>
+            <div class="weekdays" aria-hidden="true"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+            <div id="calendar-days" class="calendar-days" aria-labelledby="month-title"></div>
+            <div class="calendar-footer"><span><i></i> Today</span><p>Room for your next personal best.</p></div>
+          </div>
+          <div class="small-note"><span>↳</span> Consistency starts with showing up.</div>
+        </section>
+        <section class="muscles-section" aria-labelledby="muscles-title">
+          <div class="section-heading"><h2 id="muscles-title">Pick your focus</h2><span class="section-label">04 GROUPS</span></div>
+          <p class="section-description">What are we training today?</p>
+          <div class="muscle-grid">
+            <button class="muscle-card" data-muscle="Shoulders" aria-pressed="false"><span class="card-top"><span class="muscle-icon"><svg><use href="#shoulders"/></svg></span><span class="card-number">01</span></span><span class="card-bottom"><span><strong>Shoulders</strong><small>BUILD YOUR FRAME</small></span><svg class="card-arrow"><use href="#arrow"/></svg></span></button>
+            <button class="muscle-card" data-muscle="Chest" aria-pressed="false"><span class="card-top"><span class="muscle-icon"><svg><use href="#chest"/></svg></span><span class="card-number">02</span></span><span class="card-bottom"><span><strong>Chest</strong><small>FIND YOUR PUSH</small></span><svg class="card-arrow"><use href="#arrow"/></svg></span></button>
+            <button class="muscle-card" data-muscle="Back" aria-pressed="false"><span class="card-top"><span class="muscle-icon"><svg><use href="#back"/></svg></span><span class="card-number">03</span></span><span class="card-bottom"><span><strong>Back</strong><small>POWER IN EVERY PULL</small></span><svg class="card-arrow"><use href="#arrow"/></svg></span></button>
+            <button class="muscle-card" data-muscle="Legs" aria-pressed="false"><span class="card-top"><span class="muscle-icon"><svg><use href="#legs"/></svg></span><span class="card-number">04</span></span><span class="card-bottom"><span><strong>Legs</strong><small>A STRONG FOUNDATION</small></span><svg class="card-arrow"><use href="#arrow"/></svg></span></button>
+          </div>
+          <p class="selection-status" id="selection-status" aria-live="polite">Choose a muscle group to set your focus.</p>
+          <section class="exercise-panel" id="exercise-panel" aria-labelledby="exercise-title" hidden>
+            <div class="exercise-heading"><h3 id="exercise-title"></h3><label class="weight-unit">Weight unit <select id="weight-unit"><option value="kg">kg</option><option value="lb">lb</option></select></label></div>
+            <p class="exercise-help">Select your exercises and enter the weight you used. Use 0 for bodyweight.</p>
+            <div id="exercise-list" class="exercise-list"></div>
+            <p class="exercise-save-status" id="exercise-save-status" aria-live="polite">Changes are saved on this device for today.</p>
+          </section>
+        </section>
+      </div>
+      <footer class="page-footer"><span>LESS SCROLLING. MORE LIFTING.</span><span class="footer-brand">form.</span><span>BUILT FOR YOUR EVERYDAY.</span></footer>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
