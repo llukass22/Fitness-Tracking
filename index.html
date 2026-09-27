@@ -18,6 +18,7 @@
     <symbol id="legs" viewBox="0 0 48 48"><path d="M15 9h18l-1 14-3 17h-7l2-17-2 17h-7l1-17-1-14ZM16 17h16M24 17v6M15 40h7m0 0h7"/></symbol>
     <symbol id="core" viewBox="0 0 48 48"><path d="m15 9 2 10-3 18 10 4 10-4-3-18 2-10M17 19h14M24 19v19M18 25h12m-13 6h14"/></symbol>
     <symbol id="arms" viewBox="0 0 48 48"><path d="m10 29 4-15 7-3 4 6-5 4-3-3-2 11c5-4 10-4 14 0l5-4 5 7c-7 10-21 10-29-3ZM14 14l6 7m9 8 3 5"/></symbol>
+    <symbol id="cardio" viewBox="0 0 48 48"><path d="M24 39 9 25C-2 14 13 3 24 15 35 3 50 14 39 25L24 39Z"/><path d="M10 24h8l3-7 5 14 3-7h9"/></symbol>
   </defs></svg>
   <div class="app-shell">
     <header class="site-header">
@@ -42,7 +43,7 @@
           <div class="small-note"><span>↳</span> Consistency starts with showing up.</div>
         </section>
         <section class="muscles-section" aria-labelledby="muscles-title">
-          <div class="section-heading"><h2 id="muscles-title">Pick your focus</h2><span class="section-label">06 GROUPS</span></div>
+          <div class="section-heading"><h2 id="muscles-title">Pick your focus</h2><span class="section-label">07 CATEGORIES</span></div>
           <p class="section-description">What are we training today?</p>
           <div class="muscle-grid">
             <button class="muscle-card" data-muscle="Shoulders" aria-pressed="false"><span class="card-top"><span class="muscle-icon"><svg><use href="#shoulders"/></svg></span><span class="card-number">01</span></span><span class="card-bottom"><span><strong>Shoulders</strong><small>BUILD YOUR FRAME</small></span><svg class="card-arrow"><use href="#arrow"/></svg></span></button>
@@ -51,11 +52,12 @@
             <button class="muscle-card" data-muscle="Legs" aria-pressed="false"><span class="card-top"><span class="muscle-icon"><svg><use href="#legs"/></svg></span><span class="card-number">04</span></span><span class="card-bottom"><span><strong>Legs</strong><small>A STRONG FOUNDATION</small></span><svg class="card-arrow"><use href="#arrow"/></svg></span></button>
             <button class="muscle-card" data-muscle="Core" aria-pressed="false"><span class="card-top"><span class="muscle-icon"><svg><use href="#core"/></svg></span><span class="card-number">05</span></span><span class="card-bottom"><span><strong>Core</strong><small>STRENGTH AT YOUR CENTER</small></span><svg class="card-arrow"><use href="#arrow"/></svg></span></button>
             <button class="muscle-card" data-muscle="Arms" aria-pressed="false"><span class="card-top"><span class="muscle-icon"><svg><use href="#arms"/></svg></span><span class="card-number">06</span></span><span class="card-bottom"><span><strong>Arms</strong><small>POWER IN YOUR HANDS</small></span><svg class="card-arrow"><use href="#arrow"/></svg></span></button>
+            <button class="muscle-card" data-muscle="Cardio" aria-pressed="false"><span class="card-top"><span class="muscle-icon"><svg><use href="#cardio"/></svg></span><span class="card-number">07</span></span><span class="card-bottom"><span><strong>Cardio</strong><small>KEEP YOUR HEART STRONG</small></span><svg class="card-arrow"><use href="#arrow"/></svg></span></button>
           </div>
-          <p class="selection-status" id="selection-status" aria-live="polite">Choose a muscle group to set your focus.</p>
+          <p class="selection-status" id="selection-status" aria-live="polite">Choose a training category to set your focus.</p>
           <section class="exercise-panel" id="exercise-panel" aria-labelledby="exercise-title" hidden>
-            <div class="exercise-heading"><h3 id="exercise-title"></h3><label class="weight-unit">Weight unit <select id="weight-unit"><option value="kg">kg</option><option value="lb">lb</option></select></label></div>
-            <p class="exercise-help">Select your exercises and enter the weight you used. Use 0 for bodyweight.</p>
+            <div class="exercise-heading"><h3 id="exercise-title"></h3><label class="weight-unit" id="weight-unit-control">Weight unit <select id="weight-unit"><option value="kg">kg</option><option value="lb">lb</option></select></label></div>
+            <p class="exercise-help" id="exercise-help">Select your exercises and enter the weight you used. Use 0 for bodyweight.</p>
             <div id="exercise-list" class="exercise-list"></div>
             <p class="exercise-save-status" id="exercise-save-status" aria-live="polite">Changes are saved on this device for today.</p>
           </section>

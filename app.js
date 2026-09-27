@@ -35,12 +35,13 @@ document.getElementById('next-month').addEventListener('click', () => {
 });
 
 const exercisesByMuscle = {
-  Shoulders: ['Seated dumbbell press', 'Lateral raise', 'Front raises', 'Upright row'],
-  Chest: ['Dumbbell bench press', 'Push ups', 'Pec deck fly', 'Cable crossover'],
-  Back: ['Pull ups', 'Cable row', 'Lat pulldown'],
-  Legs: ['Leg extensions', 'Calf raises', 'Leg curl', 'Leg press'],
-  Core: ['Plank', 'Ab rollouts', 'Russian twist', 'Leg raises', 'Crunches'],
-  Arms: ['Incline dumbbell curl', 'Dumbbell hammer curl', 'Rope pushdowns', 'Barbell curl', 'Dips'],
+  Cardio: ['Incline Treadmill Walk', 'Treadmill Run'],
+  Shoulders: ['Dumbbell Press', 'Dumbbell Lateral Raise', 'Cable Lateral Raise', 'Rear Delt Fly', 'Face Pull', 'Dumbbell Upright Row'],
+  Chest: ['Dumbbell Bench Press', 'Dumbbell Fly', 'Cable Chest Fly', 'Pec Deck Fly', 'Low Cable Cross Over', 'High Cable Cross Over', 'Push Ups'],
+  Back: ['Lat Pulldown', 'Cable Row', 'Dumbbell Shrug', 'Pull Ups'],
+  Legs: ['Leg Extension', 'Leg Press', 'Hack Squat', 'Leg Curl', 'Dumbbell Lunge', 'Calf Press'],
+  Arms: ['Dumbbell Curl', 'Cable Curl', 'Barbell Curl', 'Dumbbell Hammer Curl', 'Cable Hammer Curl', 'Cable Pushdown', 'Cable Overhead Extension', 'Dumbbell Triceps Kickback'],
+  Core: ['Plank', 'Ab Rollouts', 'Russian Trister', 'Leg Raises', 'Crunches', 'Mountain Climbers', 'Bicycle Crunches'],
 };
 const storageKey = `form-exercises-${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
 let exerciseLog = {};
@@ -53,6 +54,8 @@ try {
 const exercisePanel = document.getElementById('exercise-panel');
 const exerciseList = document.getElementById('exercise-list');
 const weightUnit = document.getElementById('weight-unit');
+const weightUnitControl = document.getElementById('weight-unit-control');
+const exerciseHelp = document.getElementById('exercise-help');
 let selectedMuscle = null;
 
 function saveExercises() {
@@ -66,8 +69,14 @@ function saveExercises() {
 
 function renderExercises() {
   exerciseList.replaceChildren();
-  exercisePanel.hidden = !selectedMuscle;
-  if (!selectedMuscle) return;
+  exercisePanel.hidden = !selectedMuscle || !exercisesByMuscle[selectedMuscle]?.length;
+  if (exercisePanel.hidden) return;
+  const isCardio = selectedMuscle === 'Cardio';
+  exercisePanel.classList.toggle('cardio-panel', isCardio);
+  weightUnitControl.hidden = isCardio;
+  exerciseHelp.textContent = isCardio
+    ? 'Select an activity and record the time and calories you burned.'
+    : 'Select your exercises and enter the weight you used. Use 0 for bodyweight.';
   document.getElementById('exercise-title').textContent = `${selectedMuscle} exercises`;
   exercisesByMuscle[selectedMuscle].forEach((name, index) => {
     const key = `${selectedMuscle}-${index}`;
@@ -75,6 +84,8 @@ function renderExercises() {
     const entry = {
       selected: saved?.selected === true,
       weight: typeof saved?.weight === 'string' ? saved.weight : '',
+      minutes: typeof saved?.minutes === 'string' ? saved.minutes : '',
+      kcal: typeof saved?.kcal === 'string' ? saved.kcal : '',
       unit: saved?.unit === 'lb' ? 'lb' : 'kg',
     };
     const row = document.createElement('div');
@@ -87,39 +98,48 @@ function renderExercises() {
     const title = document.createElement('span');
     title.textContent = name;
     label.append(checkbox, title);
-    const weightLabel = document.createElement('label');
-    weightLabel.className = 'exercise-weight';
-    const weightText = document.createElement('span');
-    weightText.textContent = `Weight (${entry.unit})`;
-    const input = document.createElement('input');
-    input.type = 'number';
-    input.min = '0';
-    input.step = 'any';
-    input.placeholder = '0';
-    input.value = entry.weight;
-    input.disabled = !entry.selected;
-    input.setAttribute('aria-label', `${name} weight in ${entry.unit}`);
-    weightLabel.append(weightText, input);
+    const metrics = document.createElement('div');
+    metrics.className = isCardio ? 'exercise-metrics cardio-metrics' : 'exercise-metrics';
+    const createMetric = (labelText, value, property, step = 'any') => {
+      const metric = document.createElement('label');
+      metric.className = 'exercise-weight';
+      const metricName = document.createElement('span');
+      metricName.textContent = labelText;
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.min = '0';
+      input.step = step;
+      input.placeholder = '0';
+      input.value = value;
+      input.disabled = !entry.selected;
+      input.setAttribute('aria-label', `${name} ${labelText}`);
+      input.addEventListener('input', () => {
+        if (!input.validity.valid) return;
+        entry[property] = input.value;
+        exerciseLog[key] = entry;
+        saveExercises();
+      });
+      metric.append(metricName, input);
+      metrics.append(metric);
+      return input;
+    };
+    const inputs = isCardio
+      ? [createMetric('Minutes', entry.minutes, 'minutes', '1'), createMetric('Burned kcal', entry.kcal, 'kcal', '1')]
+      : [createMetric(`Weight (${entry.unit})`, entry.weight, 'weight')];
     checkbox.addEventListener('change', () => {
       entry.selected = checkbox.checked;
-      input.disabled = !entry.selected;
+      inputs.forEach(input => { input.disabled = !entry.selected; });
       exerciseLog[key] = entry;
       saveExercises();
-      if (entry.selected) input.focus();
+      if (entry.selected) inputs[0].focus();
     });
-    input.addEventListener('input', () => {
-      if (!input.validity.valid) return;
-      entry.weight = input.value;
-      exerciseLog[key] = entry;
-      saveExercises();
-    });
-    row.append(label, weightLabel);
+    row.append(label, metrics);
     exerciseList.append(row);
   });
 }
 
 weightUnit.addEventListener('change', () => {
-  if (!selectedMuscle) return;
+  if (!selectedMuscle || selectedMuscle === 'Cardio') return;
   exercisesByMuscle[selectedMuscle].forEach((name, index) => {
     const key = `${selectedMuscle}-${index}`;
     const entry = exerciseLog[key] || { selected: false, weight: '', unit: 'kg' };
@@ -141,11 +161,13 @@ document.querySelectorAll('.muscle-card').forEach(card => {
     document.querySelectorAll('.muscle-card').forEach(item => item.setAttribute('aria-pressed', 'false'));
     card.setAttribute('aria-pressed', String(!wasSelected));
     selectedMuscle = wasSelected ? null : card.dataset.muscle;
-    weightUnit.value = exerciseLog[`${selectedMuscle}-0`]?.unit === 'lb' ? 'lb' : 'kg';
+    if (selectedMuscle !== 'Cardio') weightUnit.value = exerciseLog[`${selectedMuscle}-0`]?.unit === 'lb' ? 'lb' : 'kg';
     renderExercises();
     document.getElementById('selection-status').textContent = wasSelected
-      ? 'Choose a muscle group to set your focus.'
-      : `${card.dataset.muscle} selected. Choose your exercises below.`;
+      ? 'Choose a training category to set your focus.'
+      : selectedMuscle === 'Cardio'
+        ? 'Cardio selected. Your focus for today.'
+        : `${card.dataset.muscle} selected. Choose your exercises below.`;
   });
 });
 renderCalendar();
