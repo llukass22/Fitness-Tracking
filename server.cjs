@@ -9,6 +9,9 @@ const files = {
   '/styles.css': ['styles.css', 'text/css; charset=utf-8'],
   '/app.js': ['app.js', 'text/javascript; charset=utf-8'],
 };
+for (const muscle of ['shoulders', 'chest', 'back', 'legs', 'core', 'arms', 'cardio']) {
+  files[`/assets/muscles/${muscle}.png`] = [`assets/muscles/${muscle}.png`, 'image/png'];
+}
 
 const server = http.createServer((request, response) => {
   const file = files[(request.url || '/').split('?')[0]];
