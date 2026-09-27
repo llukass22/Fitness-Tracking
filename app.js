@@ -39,6 +39,8 @@ const exercisesByMuscle = {
   Chest: ['Dumbbell bench press', 'Push ups', 'Pec deck fly', 'Cable crossover'],
   Back: ['Pull ups', 'Cable row', 'Lat pulldown'],
   Legs: ['Leg extensions', 'Calf raises', 'Leg curl', 'Leg press'],
+  Core: ['Plank', 'Ab rollouts', 'Russian twist', 'Leg raises', 'Crunches'],
+  Arms: ['Incline dumbbell curl', 'Dumbbell hammer curl', 'Rope pushdowns', 'Barbell curl', 'Dips'],
 };
 const storageKey = `form-exercises-${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
 let exerciseLog = {};
