@@ -1,6 +1,6 @@
 # Form
 
-A mobile-first gym tracker with a simple calendar and selectable Shoulders, Chest, Back, and Legs cards. Click a muscle group to choose its exercises and enter the weight used for each one (0 for bodyweight). Switch between kg and lb to convert weights for the displayed group. Exercise selections and weights are saved on this browser for today and preserved when switching groups or refreshing. Each new day starts a fresh log; calendar navigation only changes the calendar display.
+A mobile-first gym tracker with a selectable calendar and training categories. Select a calendar day, choose exercises across any categories, and enter weights (0 for bodyweight) or cardio minutes and calories. Switch between kg and lb to convert weights for the displayed group. Click **Submit workout** to add all selected exercises to that day. Logged days have an orange dot; select one to review its exercise details. Submitting again updates that day's workout. Drafts and submitted workouts are saved separately per day in this browser and preserved when switching days or refreshing.
 
 Run `npm start` from this folder (Node.js required; no dependency installation or build step needed).
 

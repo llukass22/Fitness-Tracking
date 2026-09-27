@@ -38,13 +38,18 @@
             <div class="calendar-top"><div><p class="small-label">THE TRAINING JOURNAL</p><h3 id="month-title"></h3></div><div class="month-controls"><button id="previous-month" aria-label="Previous month"><svg><use href="#chevron"/></svg></button><button id="next-month" aria-label="Next month"><svg><use href="#chevron"/></svg></button></div></div>
             <div class="weekdays" aria-hidden="true"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
             <div id="calendar-days" class="calendar-days" aria-labelledby="month-title"></div>
-            <div class="calendar-footer"><span><i></i> Today</span><p>Room for your next personal best.</p></div>
+
           </div>
           <div class="small-note"><span>↳</span> Consistency starts with showing up.</div>
+          <section class="workout-details" aria-labelledby="workout-date">
+            <h3 id="workout-date"></h3>
+            <p id="workout-summary"></p>
+            <ul id="workout-entries"></ul>
+          </section>
         </section>
         <section class="muscles-section" aria-labelledby="muscles-title">
           <div class="section-heading"><h2 id="muscles-title">Pick your focus</h2></div>
-          <p class="section-description">What are we training today?</p>
+          <p class="section-description" id="training-date"></p>
           <div class="muscle-grid">
             <button class="muscle-card" data-muscle="Shoulders" aria-pressed="false"><span class="card-top"><span class="muscle-icon"><img src="assets/muscles/shoulders.png" alt="" width="1280" height="1280" /></span></span><span class="card-bottom"><span><strong>Shoulders</strong></span></span></button>
             <button class="muscle-card" data-muscle="Chest" aria-pressed="false"><span class="card-top"><span class="muscle-icon"><img src="assets/muscles/chest.png" alt="" width="1280" height="1280" /></span></span><span class="card-bottom"><span><strong>Chest</strong></span></span></button>
@@ -58,8 +63,11 @@
           <section class="exercise-panel" id="exercise-panel" aria-labelledby="exercise-title" hidden>
             <div class="exercise-heading"><h3 id="exercise-title"></h3><label class="weight-unit" id="weight-unit-control">Weight unit <select id="weight-unit"><option value="kg">kg</option><option value="lb">lb</option></select></label></div>
             <p class="exercise-help" id="exercise-help">Select your exercises and enter the weight you used. Use 0 for bodyweight.</p>
-            <div id="exercise-list" class="exercise-list"></div>
-            <p class="exercise-save-status" id="exercise-save-status" aria-live="polite">Changes are saved on this device for today.</p>
+            <form id="workout-form">
+              <div id="exercise-list" class="exercise-list"></div>
+              <button class="submit-workout" type="submit">Submit workout</button>
+            </form>
+            <p class="exercise-save-status" id="exercise-save-status" aria-live="polite">Select exercises, enter your values, then submit your workout.</p>
           </section>
         </section>
       </div>

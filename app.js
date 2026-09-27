@@ -1,4 +1,14 @@
 const today = new Date();
+let selectedDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+const dateKey = date => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+const dateLabel = date => date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+function readStored(key) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) || '{}');
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  } catch { return {}; }
+}
+const workouts = readStored('form-workouts');
 let displayedMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 const monthTitle = document.getElementById('month-title');
 const daysContainer = document.getElementById('calendar-days');
@@ -14,15 +24,55 @@ function renderCalendar() {
   for (let index = 0; index < cells; index++) {
     const date = new Date(year, month, index - offset + 1);
     const isToday = date.toDateString() === today.toDateString();
-    const cell = document.createElement('div');
+    const cell = document.createElement('button');
+    cell.type = 'button';
     cell.className = `day${date.getMonth() !== month ? ' outside' : ''}${isToday ? ' today' : ''}`;
+    cell.classList.toggle('selected', dateKey(date) === dateKey(selectedDate));
+    cell.setAttribute('aria-pressed', String(dateKey(date) === dateKey(selectedDate)));
     cell.setAttribute('aria-label', date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }));
     if (isToday) cell.setAttribute('aria-current', 'date');
     const label = document.createElement('span');
     label.textContent = date.getDate();
     cell.append(label);
+    const entries = workouts[dateKey(date)];
+    if (Array.isArray(entries) && entries.length) {
+      const marker = document.createElement('i');
+      marker.className = 'workout-marker';
+      cell.append(marker);
+      cell.setAttribute('aria-label', `${cell.getAttribute('aria-label')}, ${entries.length} exercises logged`);
+    }
+    cell.addEventListener('click', () => {
+      selectedDate = date;
+      displayedMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+      storageKey = `form-exercises-${dateKey(date)}`;
+      exerciseLog = readStored(storageKey);
+      if (selectedMuscle && selectedMuscle !== 'Cardio') weightUnit.value = exerciseLog[`${selectedMuscle}-0`]?.unit === 'lb' ? 'lb' : 'kg';
+      renderExercises();
+      renderCalendar();
+      document.getElementById('exercise-save-status').textContent = 'Select exercises, enter your values, then submit your workout.';
+    });
     daysContainer.append(cell);
   }
+  renderWorkout();
+}
+
+function renderWorkout() {
+  document.getElementById('workout-date').textContent = dateLabel(selectedDate);
+  document.getElementById('training-date').textContent = `Training for ${dateLabel(selectedDate)}`;
+  const entries = workouts[dateKey(selectedDate)];
+  const list = document.getElementById('workout-entries');
+  list.replaceChildren();
+  document.getElementById('workout-summary').textContent = Array.isArray(entries) && entries.length
+    ? `${entries.length} ${entries.length === 1 ? 'exercise' : 'exercises'} submitted. Select this day to review or update your workout.`
+    : 'No workout submitted. Choose your exercises and submit them for this day.';
+  if (!Array.isArray(entries)) return;
+  entries.forEach(entry => {
+    const item = document.createElement('li');
+    item.textContent = entry.muscle === 'Cardio'
+      ? `${entry.name} — ${entry.minutes} min · ${entry.kcal} kcal`
+      : `${entry.name} — ${entry.weight} ${entry.unit}`;
+    list.append(item);
+  });
 }
 
 document.getElementById('previous-month').addEventListener('click', () => {
@@ -43,14 +93,8 @@ const exercisesByMuscle = {
   Arms: ['Dumbbell Curl', 'Cable Curl', 'Barbell Curl', 'Dumbbell Hammer Curl', 'Cable Hammer Curl', 'Cable Pushdown', 'Cable Overhead Extension', 'Dumbbell Triceps Kickback'],
   Core: ['Plank', 'Ab Rollouts', 'Russian Trister', 'Leg Raises', 'Crunches', 'Mountain Climbers', 'Bicycle Crunches'],
 };
-const storageKey = `form-exercises-${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
-let exerciseLog = {};
-try {
-  const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
-  if (stored && typeof stored === 'object' && !Array.isArray(stored)) exerciseLog = stored;
-} catch {
-  // Keep the exercise picker usable when browser storage is unavailable.
-}
+let storageKey = `form-exercises-${dateKey(selectedDate)}`;
+let exerciseLog = readStored(storageKey);
 const exercisePanel = document.getElementById('exercise-panel');
 const exerciseList = document.getElementById('exercise-list');
 const weightUnit = document.getElementById('weight-unit');
@@ -61,7 +105,7 @@ let selectedMuscle = null;
 function saveExercises() {
   try {
     localStorage.setItem(storageKey, JSON.stringify(exerciseLog));
-    document.getElementById('exercise-save-status').textContent = 'Changes saved on this device for today.';
+    document.getElementById('exercise-save-status').textContent = 'Draft saved. Submit your workout to add it to the calendar.';
   } catch {
     document.getElementById('exercise-save-status').textContent = 'Browser storage is unavailable. Changes will only last while this page is open.';
   }
@@ -112,9 +156,9 @@ function renderExercises() {
       input.placeholder = '0';
       input.value = value;
       input.disabled = !entry.selected;
+      input.required = true;
       input.setAttribute('aria-label', `${name} ${labelText}`);
       input.addEventListener('input', () => {
-        if (!input.validity.valid) return;
         entry[property] = input.value;
         exerciseLog[key] = entry;
         saveExercises();
@@ -166,8 +210,38 @@ document.querySelectorAll('.muscle-card').forEach(card => {
     document.getElementById('selection-status').textContent = wasSelected
       ? 'Choose a training category to set your focus.'
       : selectedMuscle === 'Cardio'
-        ? 'Cardio selected. Your focus for today.'
+        ? 'Cardio selected. Choose your activities below.'
         : `${card.dataset.muscle} selected. Choose your exercises below.`;
   });
+});
+document.getElementById('workout-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const entries = [];
+  for (const [muscle, names] of Object.entries(exercisesByMuscle)) {
+    for (const [index, name] of names.entries()) {
+      const entry = exerciseLog[`${muscle}-${index}`];
+      if (!entry?.selected) continue;
+      const properties = muscle === 'Cardio' ? ['minutes', 'kcal'] : ['weight'];
+      if (properties.some(property => entry[property] === '' || entry[property] == null || !Number.isFinite(Number(entry[property])) || Number(entry[property]) < 0 || (muscle === 'Cardio' && !Number.isInteger(Number(entry[property]))))) {
+        selectedMuscle = muscle;
+        document.querySelectorAll('.muscle-card').forEach(card => card.setAttribute('aria-pressed', String(card.dataset.muscle === muscle)));
+        weightUnit.value = exerciseLog[`${muscle}-0`]?.unit === 'lb' ? 'lb' : 'kg';
+        renderExercises();
+        document.getElementById('exercise-save-status').textContent = `Enter valid ${muscle === 'Cardio' ? 'minutes and calories' : 'weights'} for ${name} before submitting.`;
+        document.getElementById('workout-form').reportValidity();
+        return;
+      }
+      entries.push({ ...entry, muscle, name });
+    }
+  }
+  if (!entries.length) {
+    document.getElementById('exercise-save-status').textContent = 'Select at least one exercise before submitting.';
+    return;
+  }
+  workouts[dateKey(selectedDate)] = entries;
+  let persisted = true;
+  try { localStorage.setItem('form-workouts', JSON.stringify(workouts)); } catch { persisted = false; }
+  renderCalendar();
+  document.getElementById('exercise-save-status').textContent = `Workout submitted for ${dateLabel(selectedDate)}.${persisted ? ' Saved on this device.' : ' Browser storage is unavailable; this workout will only last while the page is open.'}`;
 });
 renderCalendar();
