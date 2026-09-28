@@ -57,6 +57,7 @@ function renderCalendar() {
 }
 
 function renderWorkout() {
+  document.getElementById('workout-removal-status').textContent = '';
   document.getElementById('workout-date').textContent = dateLabel(selectedDate);
   document.getElementById('training-date').textContent = `Training for ${dateLabel(selectedDate)}`;
   const entries = workouts[dateKey(selectedDate)];
@@ -66,13 +67,40 @@ function renderWorkout() {
     ? `${entries.length} ${entries.length === 1 ? 'exercise' : 'exercises'} submitted. Select this day to review or update your workout.`
     : 'No workout submitted. Choose your exercises and submit them for this day.';
   if (!Array.isArray(entries)) return;
-  entries.forEach(entry => {
+  entries.forEach((entry, index) => {
     const item = document.createElement('li');
-    item.textContent = entry.muscle === 'Cardio'
+    const details = document.createElement('span');
+    details.textContent = entry.muscle === 'Cardio'
       ? `${entry.name} — ${entry.minutes} min · ${entry.kcal} kcal`
       : `${entry.name} — ${entry.weight} ${entry.unit}`;
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'remove-entry';
+    remove.textContent = 'Remove';
+    remove.setAttribute('aria-label', `Remove ${entry.name} from ${dateLabel(selectedDate)}`);
+    remove.addEventListener('click', () => removeWorkoutEntry(index));
+    item.append(details, remove);
     list.append(item);
   });
+}
+
+function removeWorkoutEntry(index) {
+  const key = dateKey(selectedDate);
+  const entries = workouts[key];
+  if (!Array.isArray(entries) || !entries[index]) return;
+  const [removed] = entries.splice(index, 1);
+  if (!entries.length) delete workouts[key];
+  const exerciseIndex = exercisesByMuscle[removed.muscle]?.indexOf(removed.name) ?? -1;
+  if (exerciseIndex !== -1) delete exerciseLog[`${removed.muscle}-${exerciseIndex}`];
+  let persisted = true;
+  try { localStorage.setItem('form-workouts', JSON.stringify(workouts)); } catch { persisted = false; }
+  try { localStorage.setItem(storageKey, JSON.stringify(exerciseLog)); } catch { persisted = false; }
+  renderExercises();
+  renderCalendar();
+  document.getElementById('workout-removal-status').textContent = `${removed.name} removed from ${dateLabel(selectedDate)}.${persisted ? '' : ' Browser storage is unavailable; this removal will only last while the page is open.'}`;
+  const items = document.getElementById('workout-entries').children;
+  if (items.length) items[Math.min(index, items.length - 1)].lastElementChild.focus();
+  else document.getElementById('workout-summary').focus();
 }
 
 document.getElementById('previous-month').addEventListener('click', () => {
@@ -96,11 +124,19 @@ const exercisesByMuscle = {
 let storageKey = `form-exercises-${dateKey(selectedDate)}`;
 let exerciseLog = readStored(storageKey);
 const exercisePanel = document.getElementById('exercise-panel');
+const exerciseModal = document.getElementById('exercise-modal');
 const exerciseList = document.getElementById('exercise-list');
 const weightUnit = document.getElementById('weight-unit');
 const weightUnitControl = document.getElementById('weight-unit-control');
 const exerciseHelp = document.getElementById('exercise-help');
 let selectedMuscle = null;
+let modalOpen = false;
+
+function closeExerciseModal() {
+  modalOpen = false;
+  renderExercises();
+  document.querySelector(`.muscle-card[data-muscle="${selectedMuscle}"]`)?.focus();
+}
 
 function saveExercises() {
   try {
@@ -113,8 +149,9 @@ function saveExercises() {
 
 function renderExercises() {
   exerciseList.replaceChildren();
-  exercisePanel.hidden = !selectedMuscle || !exercisesByMuscle[selectedMuscle]?.length;
-  if (exercisePanel.hidden) return;
+  exerciseModal.hidden = !modalOpen || !selectedMuscle || !exercisesByMuscle[selectedMuscle]?.length;
+  document.body.classList.toggle('modal-open', !exerciseModal.hidden);
+  if (exerciseModal.hidden) return;
   const isCardio = selectedMuscle === 'Cardio';
   exercisePanel.classList.toggle('cardio-panel', isCardio);
   weightUnitControl.hidden = isCardio;
@@ -128,6 +165,7 @@ function renderExercises() {
     const entry = {
       selected: saved?.selected === true,
       weight: typeof saved?.weight === 'string' ? saved.weight : '',
+      reps: typeof saved?.reps === 'string' ? saved.reps : '',
       minutes: typeof saved?.minutes === 'string' ? saved.minutes : '',
       kcal: typeof saved?.kcal === 'string' ? saved.kcal : '',
       unit: saved?.unit === 'lb' ? 'lb' : 'kg',
@@ -156,7 +194,7 @@ function renderExercises() {
       input.placeholder = '0';
       input.value = value;
       input.disabled = !entry.selected;
-      input.required = true;
+      input.required = property !== 'reps';
       input.setAttribute('aria-label', `${name} ${labelText}`);
       input.addEventListener('input', () => {
         entry[property] = input.value;
@@ -169,7 +207,7 @@ function renderExercises() {
     };
     const inputs = isCardio
       ? [createMetric('Minutes', entry.minutes, 'minutes', '1'), createMetric('Burned kcal', entry.kcal, 'kcal', '1')]
-      : [createMetric(`Weight (${entry.unit})`, entry.weight, 'weight')];
+      : [createMetric(`Weight (${entry.unit})`, entry.weight, 'weight'), createMetric('Reps (optional)', entry.reps, 'reps', '1')];
     checkbox.addEventListener('change', () => {
       entry.selected = checkbox.checked;
       inputs.forEach(input => { input.disabled = !entry.selected; });
@@ -206,6 +244,7 @@ document.querySelectorAll('.muscle-card').forEach(card => {
     card.setAttribute('aria-pressed', String(!wasSelected));
     selectedMuscle = wasSelected ? null : card.dataset.muscle;
     if (selectedMuscle !== 'Cardio') weightUnit.value = exerciseLog[`${selectedMuscle}-0`]?.unit === 'lb' ? 'lb' : 'kg';
+    modalOpen = Boolean(selectedMuscle);
     renderExercises();
     document.getElementById('selection-status').textContent = wasSelected
       ? 'Choose a training category to set your focus.'
@@ -221,13 +260,21 @@ document.getElementById('workout-form').addEventListener('submit', event => {
     for (const [index, name] of names.entries()) {
       const entry = exerciseLog[`${muscle}-${index}`];
       if (!entry?.selected) continue;
-      const properties = muscle === 'Cardio' ? ['minutes', 'kcal'] : ['weight'];
-      if (properties.some(property => entry[property] === '' || entry[property] == null || !Number.isFinite(Number(entry[property])) || Number(entry[property]) < 0 || (muscle === 'Cardio' && !Number.isInteger(Number(entry[property]))))) {
+      const properties = muscle === 'Cardio' ? ['minutes', 'kcal'] : ['weight', 'reps'];
+      if (properties.some(property => {
+        const value = entry[property];
+        if (property === 'reps' && (value === '' || value == null)) return false;
+        return value === '' || value == null || !Number.isFinite(Number(value)) || Number(value) < 0
+          || ((muscle === 'Cardio' || property === 'reps') && !Number.isInteger(Number(value)));
+      })) {
         selectedMuscle = muscle;
+        modalOpen = true;
         document.querySelectorAll('.muscle-card').forEach(card => card.setAttribute('aria-pressed', String(card.dataset.muscle === muscle)));
         weightUnit.value = exerciseLog[`${muscle}-0`]?.unit === 'lb' ? 'lb' : 'kg';
         renderExercises();
-        document.getElementById('exercise-save-status').textContent = `Enter valid ${muscle === 'Cardio' ? 'minutes and calories' : 'weights'} for ${name} before submitting.`;
+        document.getElementById('exercise-save-status').textContent = muscle === 'Cardio'
+          ? `Enter valid minutes and calories for ${name} before submitting.`
+          : `Enter a valid weight for ${name}. Reps are optional; if entered, use a non-negative whole number.`;
         document.getElementById('workout-form').reportValidity();
         return;
       }
@@ -242,6 +289,16 @@ document.getElementById('workout-form').addEventListener('submit', event => {
   let persisted = true;
   try { localStorage.setItem('form-workouts', JSON.stringify(workouts)); } catch { persisted = false; }
   renderCalendar();
-  document.getElementById('exercise-save-status').textContent = `Workout submitted for ${dateLabel(selectedDate)}.${persisted ? ' Saved on this device.' : ' Browser storage is unavailable; this workout will only last while the page is open.'}`;
+  const submissionStatus = `Workout submitted for ${dateLabel(selectedDate)}.${persisted ? ' Saved on this device.' : ' Browser storage is unavailable; this workout will only last while the page is open.'}`;
+  document.getElementById('exercise-save-status').textContent = submissionStatus;
+  closeExerciseModal();
+  document.getElementById('selection-status').textContent = submissionStatus;
+});
+document.getElementById('close-exercise-modal').addEventListener('click', closeExerciseModal);
+exerciseModal.addEventListener('click', event => {
+  if (event.target.dataset.closeModal === 'true') closeExerciseModal();
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && modalOpen) closeExerciseModal();
 });
 renderCalendar();

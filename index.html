@@ -43,8 +43,9 @@
           <div class="small-note"><span>↳</span> Consistency starts with showing up.</div>
           <section class="workout-details" aria-labelledby="workout-date">
             <h3 id="workout-date"></h3>
-            <p id="workout-summary"></p>
+            <p id="workout-summary" tabindex="-1"></p>
             <ul id="workout-entries"></ul>
+            <p id="workout-removal-status" role="status"></p>
           </section>
         </section>
         <section class="muscles-section" aria-labelledby="muscles-title">
@@ -60,15 +61,18 @@
             <button class="muscle-card" data-muscle="Cardio" aria-pressed="false"><span class="card-top"><span class="muscle-icon"><img src="assets/muscles/cardio.png" alt="" width="1280" height="1280" /></span></span><span class="card-bottom"><span><strong>Cardio</strong></span></span></button>
           </div>
           <p class="selection-status" id="selection-status" aria-live="polite">Choose a training category to set your focus.</p>
-          <section class="exercise-panel" id="exercise-panel" aria-labelledby="exercise-title" hidden>
-            <div class="exercise-heading"><h3 id="exercise-title"></h3><label class="weight-unit" id="weight-unit-control">Weight unit <select id="weight-unit"><option value="kg">kg</option><option value="lb">lb</option></select></label></div>
+          <div class="exercise-modal" id="exercise-modal" hidden>
+            <div class="exercise-modal-backdrop" data-close-modal="true"></div>
+            <section class="exercise-panel" id="exercise-panel" role="dialog" aria-modal="true" aria-labelledby="exercise-title">
+              <div class="exercise-heading"><h3 id="exercise-title" tabindex="-1"></h3><div class="exercise-heading-actions"><label class="weight-unit" id="weight-unit-control">Weight unit <select id="weight-unit"><option value="kg">kg</option><option value="lb">lb</option></select></label><button class="close-exercise-modal" id="close-exercise-modal" type="button" aria-label="Close exercise logger">×</button></div></div>
             <p class="exercise-help" id="exercise-help">Select your exercises and enter the weight you used. Use 0 for bodyweight.</p>
             <form id="workout-form">
               <div id="exercise-list" class="exercise-list"></div>
               <button class="submit-workout" type="submit">Submit workout</button>
             </form>
             <p class="exercise-save-status" id="exercise-save-status" aria-live="polite">Select exercises, enter your values, then submit your workout.</p>
-          </section>
+            </section>
+          </div>
         </section>
       </div>
       <footer class="page-footer"><span>LESS SCROLLING. MORE LIFTING.</span><span class="footer-brand">form.</span><span>BUILT FOR YOUR EVERYDAY.</span></footer>

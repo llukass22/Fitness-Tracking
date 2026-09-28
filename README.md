@@ -2,6 +2,8 @@
 
 A mobile-first gym tracker with a selectable calendar and training categories. Select a calendar day, choose exercises across any categories, and enter weights (0 for bodyweight) or cardio minutes and calories. Switch between kg and lb to convert weights for the displayed group. Click **Submit workout** to add all selected exercises to that day. Logged days have an orange dot; select one to review its exercise details. Submitting again updates that day's workout. Drafts and submitted workouts are saved separately per day in this browser and preserved when switching days or refreshing.
 
+To remove an entry, select its calendar day and click **Remove** beside the exercise in the workout details. This also clears that exercise from the day's draft. Removing the last entry clears the day's calendar dot.
+
 Run `npm start` from this folder (Node.js required; no dependency installation or build step needed).
 
 - On this computer: http://localhost:5173
