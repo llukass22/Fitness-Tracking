@@ -57,6 +57,7 @@ function renderCalendar() {
 }
 
 function renderWorkout() {
+  document.getElementById('submission-confirmation').hidden = true;
   document.getElementById('workout-removal-status').textContent = '';
   document.getElementById('workout-date').textContent = dateLabel(selectedDate);
   document.getElementById('training-date').textContent = `Training for ${dateLabel(selectedDate)}`;
@@ -72,7 +73,7 @@ function renderWorkout() {
     const details = document.createElement('span');
     details.textContent = entry.muscle === 'Cardio'
       ? `${entry.name} — ${entry.minutes} min · ${entry.kcal} kcal`
-      : `${entry.name} — ${entry.weight} ${entry.unit}`;
+      : `${entry.name} — ${entry.weight} ${entry.unit}${entry.reps !== '' && entry.reps != null ? ` · ${entry.reps} ${Number(entry.reps) === 1 ? 'rep' : 'reps'}` : ''}`;
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.className = 'remove-entry';
@@ -157,7 +158,7 @@ function renderExercises() {
   weightUnitControl.hidden = isCardio;
   exerciseHelp.textContent = isCardio
     ? 'Select an activity and record the time and calories you burned.'
-    : 'Select your exercises and enter the weight you used. Use 0 for bodyweight.';
+    : 'Select your exercises and enter the weight you used and optional reps. Use 0 for bodyweight.';
   document.getElementById('exercise-title').textContent = `${selectedMuscle} exercises`;
   exercisesByMuscle[selectedMuscle].forEach((name, index) => {
     const key = `${selectedMuscle}-${index}`;
@@ -172,6 +173,7 @@ function renderExercises() {
     };
     const row = document.createElement('div');
     row.className = 'exercise-row';
+    row.classList.toggle('is-selected', entry.selected);
     const label = document.createElement('label');
     label.className = 'exercise-choice';
     const checkbox = document.createElement('input');
@@ -210,10 +212,19 @@ function renderExercises() {
       : [createMetric(`Weight (${entry.unit})`, entry.weight, 'weight'), createMetric('Reps (optional)', entry.reps, 'reps', '1')];
     checkbox.addEventListener('change', () => {
       entry.selected = checkbox.checked;
+      row.classList.toggle('is-selected', entry.selected);
       inputs.forEach(input => { input.disabled = !entry.selected; });
       exerciseLog[key] = entry;
       saveExercises();
       if (entry.selected) inputs[0].focus();
+    });
+    row.addEventListener('click', event => {
+      // Let the checkbox and its label handle their native toggle once.
+      if (label.contains(event.target)) return;
+      // Keep enabled fields and their labels available for editing.
+      if (entry.selected && metrics.contains(event.target)) return;
+      checkbox.checked = !entry.selected;
+      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
     });
     row.append(label, metrics);
     exerciseList.append(row);
@@ -293,6 +304,13 @@ document.getElementById('workout-form').addEventListener('submit', event => {
   document.getElementById('exercise-save-status').textContent = submissionStatus;
   closeExerciseModal();
   document.getElementById('selection-status').textContent = submissionStatus;
+  const confirmation = document.getElementById('submission-confirmation');
+  confirmation.classList.toggle('storage-unavailable', !persisted);
+  document.getElementById('submission-confirmation-details').textContent = `${entries.length} ${entries.length === 1 ? 'exercise' : 'exercises'} · ${dateLabel(selectedDate)}. ${persisted ? 'Saved on this device.' : 'Available while this page is open; browser storage is unavailable.'}`;
+  confirmation.hidden = false;
+});
+document.getElementById('dismiss-submission-confirmation').addEventListener('click', () => {
+  document.getElementById('submission-confirmation').hidden = true;
 });
 document.getElementById('close-exercise-modal').addEventListener('click', closeExerciseModal);
 exerciseModal.addEventListener('click', event => {

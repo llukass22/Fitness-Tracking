@@ -1,5 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
 
+.exercise-row{cursor:pointer}.exercise-row:hover{background:#ffffff05}.exercise-row.is-selected{background:#ff5b2208}.exercise-row input:disabled{pointer-events:none}
+
+.submission-confirmation[hidden]{display:none}
+.submission-confirmation{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:20;display:flex;align-items:center;gap:12px;width:min(520px,calc(100% - 32px));padding:16px 18px;border:1px solid #73ce99;border-radius:14px;background:#17271e;color:#ecfff2;box-shadow:0 12px 40px #0008}
+.confirmation-check{display:grid;place-items:center;flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#73ce99;color:#102017;font-size:21px;font-weight:700}
+.submission-confirmation strong{font-size:14px}.submission-confirmation p{margin:5px 0 0;font-size:12px;line-height:1.5;color:#b9d5c4}.submission-confirmation>div{flex:1;min-width:0}
+.submission-confirmation button{flex-shrink:0;width:36px;height:36px;background:transparent;border:0;border-radius:6px;color:inherit;font-size:24px;cursor:pointer}.submission-confirmation button:hover{background:#ffffff12}
+.submission-confirmation.storage-unavailable{border-color:var(--orange)}
+
 .workout-details #workout-entries{list-style:none;padding-left:0}.workout-details li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.workout-details li>span{min-width:0}.remove-entry{flex-shrink:0;min-height:36px;padding:7px 10px;border:1px solid var(--line);border-radius:7px;background:transparent;color:var(--orange);font-size:12px;cursor:pointer}.remove-entry:hover{background:#ff5b2212;border-color:var(--orange)}#workout-removal-status:empty{display:none}
 
 .day{position:relative;border:0;background:transparent;color:inherit;padding:0;cursor:pointer;font-family:inherit}.day.selected span{outline:1px solid var(--orange);outline-offset:2px}.day:hover{background:#ffffff08;border-radius:8px}.workout-marker{position:absolute;bottom:1px;width:5px;height:5px;background:var(--orange);border-radius:50%}.workout-details{margin-top:24px;padding:20px;border:1px solid var(--line);border-radius:14px;background:var(--card)}.workout-details h3{font-size:18px}.workout-details p{font-size:12px;color:var(--muted);line-height:1.6}.workout-details ul{padding-left:18px;margin-bottom:0;font-size:13px;line-height:1.7;overflow-wrap:anywhere}.workout-details ul:empty{display:none}.submit-workout{width:100%;margin-top:16px;padding:12px 18px;background:var(--orange);color:#101110;border:0;border-radius:8px;font-weight:700;cursor:pointer}.submit-workout:hover{background:#ff7748}
