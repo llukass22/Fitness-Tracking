@@ -28,12 +28,11 @@
     </header>
     <main>
       <section class="intro">
-        <div><h1>Show up<span>.</span></h1></div>
+        <div><h1>Track Your Progress<span>.</span></h1></div>
         <div class="intro-note"><span class="note-line"></span><p>YOUR ONLY COMPETITION<br /><strong>is who you were yesterday.</strong></p></div>
       </section>
       <div class="dashboard">
-        <section class="calendar-section" aria-labelledby="calendar-title">
-          <div class="section-heading"><h2 id="calendar-title">Your calendar</h2></div>
+        <section class="calendar-section" aria-label="Calendar">
           <div class="calendar-card">
             <div class="calendar-top"><div><p class="small-label">THE TRAINING JOURNAL</p><h3 id="month-title"></h3></div><div class="month-controls"><button id="previous-month" aria-label="Previous month"><svg><use href="#chevron"/></svg></button><button id="next-month" aria-label="Next month"><svg><use href="#chevron"/></svg></button></div></div>
             <div class="weekdays" aria-hidden="true"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
@@ -60,7 +59,7 @@
             <button class="muscle-card" data-muscle="Arms" aria-pressed="false"><span class="card-top"><span class="muscle-icon"><img src="assets/muscles/arms.png" alt="" width="1280" height="1280" /></span></span><span class="card-bottom"><span><strong>Arms</strong></span></span></button>
             <button class="muscle-card" data-muscle="Cardio" aria-pressed="false"><span class="card-top"><span class="muscle-icon"><img src="assets/muscles/cardio.png" alt="" width="1280" height="1280" /></span></span><span class="card-bottom"><span><strong>Cardio</strong></span></span></button>
           </div>
-          <p class="selection-status" id="selection-status" aria-live="polite">Choose a training category to set your focus.</p>
+          <p class="selection-status" id="selection-status" aria-live="polite"></p>
           <div class="exercise-modal" id="exercise-modal" hidden>
             <div class="exercise-modal-backdrop" data-close-modal="true"></div>
             <section class="exercise-panel" id="exercise-panel" role="dialog" aria-modal="true" aria-labelledby="exercise-title">
