@@ -88,11 +88,13 @@ function renderWorkout() {
   document.getElementById('workout-date').textContent = dateLabel(selectedDate);
   document.getElementById('training-date').textContent = `Training for ${dateLabel(selectedDate)}`;
   const entries = workouts[dateKey(selectedDate)];
+  const hasEntries = Array.isArray(entries) && entries.length > 0;
+  document.querySelector('.workout-details').classList.toggle('has-entries', hasEntries);
   const list = document.getElementById('workout-entries');
   list.replaceChildren();
-  document.getElementById('workout-summary').textContent = Array.isArray(entries) && entries.length
-    ? `${entries.length} ${entries.length === 1 ? 'exercise' : 'exercises'} submitted. Select this day to review or update your workout.`
-    : 'No workout submitted. Choose your exercises and submit them for this day.';
+  const summary = document.getElementById('workout-summary');
+  summary.hidden = hasEntries;
+  summary.textContent = summary.hidden ? '' : 'No workout submitted. Choose your exercises and submit them for this day.';
   if (!Array.isArray(entries)) return;
   entries.forEach((entry, index) => {
     const item = document.createElement('li');
@@ -103,7 +105,7 @@ function renderWorkout() {
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.className = 'remove-entry';
-    remove.textContent = 'Remove';
+    remove.textContent = '×';
     remove.setAttribute('aria-label', `Remove ${currentExerciseName(entry.name)} from ${dateLabel(selectedDate)}`);
     remove.addEventListener('click', () => removeWorkoutEntry(index));
     item.append(details, remove);
