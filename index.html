@@ -24,9 +24,20 @@
     <header class="site-header">
       <a class="brand" href="./" aria-label="tracked home"><span class="brand-mark"><i></i><i></i><i></i></span>tracked<span class="brand-dot">.</span></a>
       <span class="header-label">YOUR TRAINING SPACE</span>
-      <div class="profile" aria-label="Your profile">YOU<span></span></div>
+      <div class="account-controls"><span id="account-email"></span><button id="refresh-workouts" type="button" hidden>Refresh</button><button id="sign-out" type="button" hidden>Sign out</button></div>
     </header>
-    <main>
+    <section class="account-card" id="account-card" aria-labelledby="account-title">
+      <h1 id="account-title">Your training, everywhere.</h1>
+      <p>Sign in to access your workouts on any device.</p>
+      <form id="account-form">
+        <label>Email<input id="account-email-input" type="email" autocomplete="username" required maxlength="254" /></label>
+        <label>Password<input id="account-password" type="password" autocomplete="current-password" required minlength="12" maxlength="128" /></label>
+        <button id="account-submit" type="submit">Sign in</button>
+        <button id="account-toggle" type="button">Create an account</button>
+      </form>
+    </section>
+    <p id="sync-status" class="sync-status" role="status" aria-live="polite">Connecting…</p>
+    <main id="tracker" hidden>
       <section class="intro">
         <div><h1>The Training Journal<span>.</span></h1></div>
         <div class="intro-note"><span class="note-line"></span><p>YOUR ONLY COMPETITION<br /><strong>is who you were yesterday.</strong></p></div>

@@ -1,18 +1,59 @@
-# Form
+# tracked.
 
-A mobile-first gym tracker with a selectable calendar and training categories. Select a calendar day, choose exercises across any categories, and enter weights (0 for bodyweight) or cardio minutes and calories. Switch between kg and lb to convert weights for the displayed group. Click **Submit workout** to add all selected exercises to that day. Logged days have an orange dot; select one to review its exercise details. Submitting again updates that day's workout. Drafts and submitted workouts are saved separately per day in this browser and preserved when switching days or refreshing.
+A mobile-first training journal with email/password accounts and shared MariaDB/MySQL workout storage. Sign in with the same account on your phone and computer to access the same submitted workouts. Use **Refresh** to fetch changes made on another device.
 
-To remove an entry, select its calendar day and click **Remove** beside the exercise in the workout details. This also clears that exercise from the day's draft. Removing the last entry clears the day's calendar dot.
+Choose a calendar day, select exercises, enter weight and optional sets (or cardio minutes and calories), then submit. Submitting replaces that day's workout. Remove individual entries from the workout details. Weekly progress counts submitted days in the selected Monday–Sunday week, with a goal of three days.
 
-Choose **Custom** to enter any exercise name with Weight and Sets. Use **Add exercise** for additional rows, and deselect any row you do not want to submit. Custom exercises support kg/lb conversion and are saved in that day's draft and submitted workout alongside the other categories.
+Submitted workouts are saved on the server. Drafts stay in the current browser, separately for each account and date. Existing `form-workouts` and `form-exercises-*` browser data is ignored; there is no import. On another device, selecting a logged day seeds a new draft from its saved workout. Failed saves keep the draft and do not report success. If another device edited the same day, a save conflict asks you to reload; use Refresh before reviewing and resubmitting your draft.
 
-Weekly workout progress shows the Monday–Sunday week containing the selected calendar day, with a goal of 3 days. Each day with at least one submitted exercise counts once: 0, 1, 2, and 3 days show 0%, 33%, 67%, and 100%; additional days stay at 100%. Drafts do not count. Progress is calculated from the existing submitted workouts and updates with a smooth fill transition after submitting or removing exercises (respecting reduced-motion settings).
+## Hostinger Cloud deployment
 
-Run `npm start` from this folder (Node.js required; no dependency installation or build step needed).
+1. In Hostinger's website dashboard, open **Databases → Management** and create a MySQL database and user. Note the host, database name, username, and password. Use the full names displayed by Hostinger, including any account prefix.
+2. Deploy this repository as a **Node.js web app**, using Node.js 22 or newer. Install dependencies with `npm ci`; there is no frontend build step. The start command is `npm start` and the entry file is `server.cjs`. The app reads the hosting runtime's `PORT`.
+3. Set runtime environment variables in the hosting dashboard:
 
-- On this computer: http://localhost:5173
-- On your phone: http://192.168.1.152:5173
+   ```text
+   DB_HOST=localhost
+   DB_PORT=3306
+   DB_USER=your_full_database_username
+   DB_PASSWORD=your_database_password
+   DB_NAME=your_full_database_name
+   APP_ORIGIN=https://your-domain.com
+   NODE_ENV=production
+   ALLOW_REGISTRATION=true
+   ```
 
-The server listens on all network interfaces. Your computer must have the IP address `192.168.1.152`, and your phone must be on the same local network. If Windows Firewall prompts, allow Node.js on private networks. Stop the server with Ctrl+C. Set the `PORT` environment variable to use a different port.
+   Use Hostinger's actual database host if it differs from `localhost`. `APP_ORIGIN` must exactly match the address you visit, including `www` if applicable, with no trailing slash or path. Redirect other domain variants to that canonical address. Production requires HTTPS and uses Secure session cookies. Credentials belong in runtime settings, never browser JavaScript or committed files.
 
-Logs are saved separately in each browser, so phone and desktop entries do not sync.
+4. Start/restart the app. It creates the tables in `schema.sql` automatically using the database user's permissions. Alternatively, run that SQL in phpMyAdmin first. Missing credentials or database initialization errors prevent startup.
+5. Open your HTTPS site and create an account with a password of 12–128 characters. For a personal tracker, set `ALLOW_REGISTRATION=false` after creating the accounts you need, then restart. Existing accounts can still sign in.
+6. Sign in on a second device, submit a workout on the first, then click Refresh on the second. Verify the exercises and weekly progress match. Test removal and sign-out as well.
+
+Deploy the Node.js backend with the frontend; uploading HTML/CSS/JS alone does not provide shared storage. No Hostinger credentials are included in this repository.
+
+## Local development
+
+Use Node.js 22+ and a local or development MariaDB/MySQL database. Copy `.env.example` to `.env`, fill in database credentials, and keep `NODE_ENV=development`. Install with `npm ci`, then run:
+
+```text
+node --env-file=.env server.cjs
+```
+
+Open `http://localhost:5173`. `npm start` reads environment variables supplied by the shell or hosting platform; it does not automatically load `.env`. For phone testing on your LAN, set `APP_ORIGIN` to the exact LAN URL you will visit and open that same URL on both devices. Local HTTP cookies are allowed outside production.
+
+## Data and accounts
+
+- `users` stores normalized email addresses and salted scrypt password hashes.
+- `sessions` stores hashes of random session tokens and 30-day expiration dates. Cookies are HttpOnly and SameSite=Lax; sign-out revokes the current session.
+- `workouts` stores one row per account/calendar date with a JSON array of exercise entries. This matches whole-day replacement behavior; versions prevent stale device writes. Empty rows retain versions after the last exercise is removed.
+- Every workout query is scoped to the authenticated user. Writes require the configured origin, JSON bodies, and bounded validated input. Queries use parameters. Authentication requests have an in-memory attempt limit.
+
+Account creation does not verify email ownership. Password reset, email delivery, and account deletion screens are not implemented. Keep registration disabled for private use after creating your account. Configure database backups in Hostinger independently of application deployment.
+
+## Verification
+
+```text
+npm test
+```
+
+Tests cover weekly progress, custom exercises, successful and failed saves/removals, password hashing, HTTP login/logout, account isolation, origin enforcement, validation, and concurrent edit conflicts. HTTP API tests use an in-memory database adapter; they do not verify a live MariaDB connection. Complete the two-device check above against your Hostinger database before relying on production storage.

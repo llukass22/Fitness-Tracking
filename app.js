@@ -8,7 +8,86 @@ function readStored(key) {
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   } catch { return {}; }
 }
-const workouts = readStored('form-workouts');
+const workouts = {};
+const versions = {};
+let currentUser = null;
+let savingWorkout = false;
+let refreshingWorkouts = false;
+const draftKey = date => currentUser ? `tracked-draft-${currentUser.id}-${dateKey(date)}` : '';
+function loadDraft(date) {
+  storageKey = draftKey(date);
+  exerciseLog = storageKey ? readStored(storageKey) : {};
+  if (!Object.keys(exerciseLog).length) {
+    for (const entry of workouts[dateKey(date)] || []) {
+      const index = entry.muscle === 'Custom' ? getExerciseNames('Custom').length : (exercisesByMuscle[entry.muscle] || []).indexOf(entry.name);
+      if (index >= 0) exerciseLog[entry.muscle + '-' + index] = { ...entry, selected: true };
+    }
+  }
+}
+async function requestApi(url, options = {}) {
+  const response = await fetch(url, { credentials: 'same-origin', ...options, headers: { 'Content-Type': 'application/json', ...options.headers } });
+  const data = await response.json();
+  if (!response.ok) {
+    if (response.status === 401 && currentUser) showAccount(null);
+    const error = new Error(data.error || 'Request failed.');
+    error.status = response.status;
+    throw error;
+  }
+  return data;
+}
+function showAccount(user) {
+  currentUser = user;
+  for (const key of Object.keys(workouts)) delete workouts[key];
+  for (const key of Object.keys(versions)) delete versions[key];
+  exerciseLog = {};
+  storageKey = draftKey(selectedDate);
+  modalOpen = false;
+  selectedMuscle = null;
+  renderExercises();
+  renderCalendar();
+  document.getElementById('tracker').hidden = !user;
+  document.getElementById('account-card').hidden = !!user;
+  document.getElementById('account-email').textContent = user?.email || '';
+  document.getElementById('sign-out').hidden = !user;
+  document.getElementById('refresh-workouts').hidden = !user;
+}
+async function refreshWorkouts() {
+  if (refreshingWorkouts || savingWorkout || !currentUser) return;
+  const userId = currentUser.id;
+  refreshingWorkouts = true;
+  document.getElementById('tracker').inert = true;
+  try {
+    const data = await requestApi('/api/workouts');
+    if (currentUser?.id !== userId) return;
+    for (const key of Object.keys(workouts)) delete workouts[key];
+    for (const key of Object.keys(versions)) delete versions[key];
+    Object.assign(workouts, data.workouts);
+    Object.assign(versions, data.versions);
+    loadDraft(selectedDate);
+    renderCalendar();
+    renderExercises();
+    document.getElementById('sync-status').textContent = 'Workouts synced. Drafts stay on this device.';
+  } finally {
+    refreshingWorkouts = false;
+    document.getElementById('tracker').inert = false;
+  }
+}
+async function saveWorkout(key, entries) {
+  if (!currentUser) throw new Error('Sign in to save your workout.');
+  const saved = await requestApi('/api/workouts/' + key, { method: 'PUT', body: JSON.stringify({ entries, version: versions[key] || 0 }) });
+  versions[key] = saved.version;
+  if (saved.entries.length) workouts[key] = saved.entries;
+  else delete workouts[key];
+}
+async function bootstrapAccount() {
+  try {
+    const data = await requestApi('/api/session');
+    document.getElementById('account-toggle').hidden = !data.registration;
+    showAccount(data.user);
+    if (data.user) await refreshWorkouts();
+    else document.getElementById('sync-status').textContent = 'Sign in or create an account to start.';
+  } catch (error) { document.getElementById('sync-status').textContent = error.message + ' Refresh the page to retry.'; }
+}
 const currentExerciseName = name => {
   if (name === 'Calf Press') return 'Seated Calf Raise';
   if (name === 'Rear Delt Fly') return 'Cable Rare Delt Fly';
@@ -18,26 +97,6 @@ const currentExerciseName = name => {
 };
 const displayExerciseName = entry => entry.muscle === 'Custom' ? entry.name : currentExerciseName(entry.name);
 
-function migrateExerciseLog(log) {
-  if (log.__chestOrder === 2) return log;
-  const reorderedChestEntries = [
-    log['Chest-0'],
-    log['Chest-7'],
-    log['Chest-1'],
-    log['Chest-3'],
-    log['Chest-5'],
-    log['Chest-4'],
-    log['Chest-6'],
-  ];
-  Object.keys(log).forEach(key => {
-    if (key.startsWith('Chest-')) delete log[key];
-  });
-  reorderedChestEntries.forEach((entry, index) => {
-    if (entry) log[`Chest-${index}`] = entry;
-  });
-  log.__chestOrder = 2;
-  return log;
-}
 let displayedMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 const monthTitle = document.getElementById('month-title');
 const daysContainer = document.getElementById('calendar-days');
@@ -102,8 +161,7 @@ function renderCalendar() {
     cell.addEventListener('click', () => {
       selectedDate = date;
       displayedMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-      storageKey = `form-exercises-${dateKey(date)}`;
-      exerciseLog = migrateExerciseLog(readStored(storageKey));
+      loadDraft(date);
       if (selectedMuscle && selectedMuscle !== 'Cardio') weightUnit.value = exerciseLog[`${selectedMuscle}-0`]?.unit === 'lb' ? 'lb' : 'kg';
       renderExercises();
       renderCalendar();
@@ -146,26 +204,24 @@ function renderWorkout() {
   });
 }
 
-function removeWorkoutEntry(index) {
+async function removeWorkoutEntry(index) {
+  if (savingWorkout || refreshingWorkouts) return;
   const key = dateKey(selectedDate);
   const entries = workouts[key];
   if (!Array.isArray(entries) || !entries[index]) return;
-  const [removed] = entries.splice(index, 1);
-  if (!entries.length) delete workouts[key];
-  const exerciseName = removed.muscle === 'Core' && removed.name === 'Russian Trister' ? 'Russian Twists' : currentExerciseName(removed.name);
-  const exerciseIndex = removed.muscle === 'Custom' && removed.draftKey
-    ? Number(removed.draftKey.slice(7))
-    : getExerciseNames(removed.muscle).indexOf(exerciseName);
-  if (exerciseIndex !== -1) delete exerciseLog[`${removed.muscle}-${exerciseIndex}`];
-  let persisted = true;
-  try { localStorage.setItem('form-workouts', JSON.stringify(workouts)); } catch { persisted = false; }
-  try { localStorage.setItem(storageKey, JSON.stringify(exerciseLog)); } catch { persisted = false; }
-  renderExercises();
-  renderCalendar();
-  document.getElementById('workout-removal-status').textContent = `${displayExerciseName(removed)} removed from ${dateLabel(selectedDate)}.${persisted ? '' : ' Browser storage is unavailable; this removal will only last while the page is open.'}`;
-  const items = document.getElementById('workout-entries').children;
-  if (items.length) items[Math.min(index, items.length - 1)].lastElementChild.focus();
-  else document.getElementById('workout-summary').focus();
+  const removed = entries[index];
+  savingWorkout = true;
+  document.getElementById('tracker').inert = true;
+  try {
+    await saveWorkout(key, entries.filter((_, position) => position !== index));
+    const exerciseIndex = removed.muscle === 'Custom' && removed.draftKey ? Number(removed.draftKey.slice(7)) : getExerciseNames(removed.muscle).indexOf(removed.name);
+    if (exerciseIndex !== -1) delete exerciseLog[removed.muscle + '-' + exerciseIndex];
+    saveExercises();
+    renderExercises();
+    renderCalendar();
+    document.getElementById('workout-removal-status').textContent = displayExerciseName(removed) + ' removed and synced.';
+  } catch (error) { document.getElementById('workout-removal-status').textContent = error.message; }
+  finally { savingWorkout = false; document.getElementById('tracker').inert = false; }
 }
 
 document.getElementById('previous-month').addEventListener('click', () => {
@@ -253,8 +309,8 @@ const exerciseImagesByMuscle = {
     'Dumbbell Triceps Kickback': 'assets/muscles/dumbbell-triceps-kickback.png',
   },
 };
-let storageKey = `form-exercises-${dateKey(selectedDate)}`;
-let exerciseLog = migrateExerciseLog(readStored(storageKey));
+let storageKey = '';
+let exerciseLog = {};
 const exercisePanel = document.getElementById('exercise-panel');
 const exerciseModal = document.getElementById('exercise-modal');
 const exerciseList = document.getElementById('exercise-list');
@@ -274,6 +330,7 @@ function closeExerciseModal() {
 }
 
 function saveExercises() {
+  if (!storageKey) return;
   try {
     localStorage.setItem(storageKey, JSON.stringify(exerciseLog));
     document.getElementById('exercise-save-status').textContent = 'Draft saved. Submit your workout to add it to the calendar.';
@@ -350,6 +407,7 @@ function renderExercises() {
       const nameInput = document.createElement('input');
       nameInput.id = `custom-name-${index}`;
       nameInput.type = 'text';
+      nameInput.maxLength = 160;
       nameInput.placeholder = 'e.g. Bulgarian Split Squat';
       nameInput.value = name;
       nameInput.required = entry.selected;
@@ -439,8 +497,9 @@ document.querySelectorAll('.muscle-card').forEach(card => {
     document.getElementById('selection-status').textContent = `${selectedMuscle} exercises opened.`;
   });
 });
-document.getElementById('workout-form').addEventListener('submit', event => {
+document.getElementById('workout-form').addEventListener('submit', async event => {
   event.preventDefault();
+  if (savingWorkout || refreshingWorkouts) return;
   const entries = [];
   for (const muscle of Object.keys(exercisesByMuscle)) {
     for (const [index, storedName] of getExerciseNames(muscle).entries()) {
@@ -480,18 +539,19 @@ document.getElementById('workout-form').addEventListener('submit', event => {
     document.getElementById('exercise-save-status').textContent = 'Select at least one exercise before submitting.';
     return;
   }
-  workouts[dateKey(selectedDate)] = entries;
-  let persisted = true;
-  try { localStorage.setItem('form-workouts', JSON.stringify(workouts)); } catch { persisted = false; }
-  renderCalendar();
-  const submissionStatus = `Workout submitted for ${dateLabel(selectedDate)}.${persisted ? ' Saved on this device.' : ' Browser storage is unavailable; this workout will only last while the page is open.'}`;
-  document.getElementById('exercise-save-status').textContent = submissionStatus;
-  closeExerciseModal();
-  document.getElementById('selection-status').textContent = submissionStatus;
-  const confirmation = document.getElementById('submission-confirmation');
-  confirmation.classList.toggle('storage-unavailable', !persisted);
-  document.getElementById('submission-confirmation-details').textContent = `${entries.length} ${entries.length === 1 ? 'exercise' : 'exercises'} · ${dateLabel(selectedDate)}. ${persisted ? 'Saved on this device.' : 'Available while this page is open; browser storage is unavailable.'}`;
-  confirmation.hidden = false;
+  const key = dateKey(selectedDate);
+  savingWorkout = true;
+  document.getElementById('tracker').inert = true;
+  document.getElementById('exercise-save-status').textContent = 'Saving workout…';
+  try {
+    await saveWorkout(key, entries);
+    renderCalendar();
+    closeExerciseModal();
+    document.getElementById('selection-status').textContent = 'Workout saved to your account.';
+    document.getElementById('submission-confirmation-details').textContent = entries.length + ' exercises · ' + dateLabel(selectedDate) + '. Saved to your account.';
+    document.getElementById('submission-confirmation').hidden = false;
+  } catch (error) { document.getElementById('exercise-save-status').textContent = error.message + ' Your draft is kept on this device.'; }
+  finally { savingWorkout = false; document.getElementById('tracker').inert = false; }
 });
 document.getElementById('dismiss-submission-confirmation').addEventListener('click', () => {
   document.getElementById('submission-confirmation').hidden = true;
@@ -504,3 +564,37 @@ document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && modalOpen) closeExerciseModal();
 });
 renderCalendar();
+
+let creatingAccount = false;
+document.getElementById('account-toggle').addEventListener('click', () => {
+  creatingAccount = !creatingAccount;
+  document.getElementById('account-submit').textContent = creatingAccount ? 'Create account' : 'Sign in';
+  document.getElementById('account-toggle').textContent = creatingAccount ? 'Already have an account? Sign in' : 'Create an account';
+  document.getElementById('account-password').autocomplete = creatingAccount ? 'new-password' : 'current-password';
+});
+document.getElementById('account-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const button = document.getElementById('account-submit');
+  button.disabled = true;
+  try {
+    const data = await requestApi(creatingAccount ? '/api/register' : '/api/login', { method: 'POST', body: JSON.stringify({ email: document.getElementById('account-email-input').value, password: document.getElementById('account-password').value }) });
+    document.getElementById('account-password').value = '';
+    showAccount(data.user);
+    await refreshWorkouts();
+  } catch (error) { document.getElementById('sync-status').textContent = error.message; }
+  finally { button.disabled = false; }
+});
+document.getElementById('sign-out').addEventListener('click', async () => {
+  if (savingWorkout) return;
+  try {
+    await requestApi('/api/logout', { method: 'POST', body: '{}' });
+    showAccount(null);
+    document.getElementById('sync-status').textContent = 'Signed out.';
+  } catch (error) { document.getElementById('sync-status').textContent = error.message; }
+});
+document.getElementById('refresh-workouts').addEventListener('click', async () => {
+  if (savingWorkout) return;
+  try { await refreshWorkouts(); }
+  catch (error) { document.getElementById('sync-status').textContent = error.message; }
+});
+bootstrapAccount();

@@ -2,6 +2,9 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 
+const { connectDatabase } = require('./db.cjs');
+const { createApi } = require('./api.cjs');
+let api;
 const port = Number(process.env.PORT || 5173);
 const files = {
   '/': ['index.html', 'text/html; charset=utf-8'],
@@ -14,6 +17,10 @@ for (const muscle of ['shoulders', 'chest', 'back', 'legs', 'core', 'arms', 'car
 }
 
 const server = http.createServer((request, response) => {
+  response.setHeader('X-Content-Type-Options', 'nosniff');
+  response.setHeader('Referrer-Policy', 'same-origin');
+  response.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
+  if ((request.url || '').startsWith('/api/')) return api(request, response);
   const file = files[(request.url || '/').split('?')[0]];
   if (!file || !['GET', 'HEAD'].includes(request.method)) {
     response.writeHead(404);
@@ -36,7 +43,15 @@ server.on('error', (error) => {
   process.exit(1);
 });
 
-server.listen(port, '0.0.0.0', () => {
-  console.log(`Local: http://localhost:${port}`);
-  console.log(`Mobile: http://192.168.1.152:${port}`);
-});
+async function start() {
+  const production = process.env.NODE_ENV === 'production';
+  const origin = process.env.APP_ORIGIN || `http://localhost:${port}`;
+  if (production && (!process.env.APP_ORIGIN || !origin.startsWith('https://'))) throw new Error('Set APP_ORIGIN to your HTTPS domain in production.');
+  if (new URL(origin).origin !== origin) throw new Error('APP_ORIGIN must be an origin without a trailing slash or path.');
+  const db = await connectDatabase();
+  api = createApi(db, { origin, secure: production, registration: process.env.ALLOW_REGISTRATION !== 'false' });
+  server.listen(port, '0.0.0.0', () => {
+    console.log(`Training journal listening on port ${port}`);
+  });
+}
+start().catch(error => { console.error(error.message); process.exitCode = 1; });

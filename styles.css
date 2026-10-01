@@ -95,3 +95,8 @@ body.modal-open{overflow:hidden}.exercise-modal[hidden]{display:none}.exercise-m
   .calendar-days .day{font-size:20px;min-height:46px}
   .calendar-days .day span{width:40px;height:40px}
 }
+
+[hidden]{display:none!important}
+.account-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px}.account-controls span{max-width:180px;overflow:hidden;text-overflow:ellipsis}
+.account-controls button,.account-card button{padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--text);font:inherit;cursor:pointer}
+.account-card{max-width:440px;margin:60px auto;padding:28px;border:1px solid var(--line);border-radius:16px;background:var(--card)}.account-card h1{font-size:28px}.account-card p{color:var(--muted);margin:16px 0;line-height:1.5}.account-card form,.account-card label{display:grid;gap:12px}.account-card label{margin-bottom:8px}.account-card input{min-width:0;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font:inherit}.account-card #account-submit{background:var(--orange);color:#fff}.sync-status{margin:14px 0;color:var(--muted);line-height:1.5}button:disabled{opacity:.5;cursor:wait}

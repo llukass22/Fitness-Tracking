@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "start": "node server.cjs",
-    "test": "node tests/weekly-progress.test.cjs"
+    "test": "node tests/run.cjs"
+  },
+  "dependencies": {
+    "mysql2": "^3.15.0"
   }
 }
