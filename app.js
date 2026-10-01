@@ -16,6 +16,7 @@ const currentExerciseName = name => {
   if (name === 'High Cable Cross Over') return 'Low Cable Fly';
   return name;
 };
+const displayExerciseName = entry => entry.muscle === 'Custom' ? entry.name : currentExerciseName(entry.name);
 
 function migrateExerciseLog(log) {
   if (log.__chestOrder === 2) return log;
@@ -40,6 +41,37 @@ function migrateExerciseLog(log) {
 let displayedMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 const monthTitle = document.getElementById('month-title');
 const daysContainer = document.getElementById('calendar-days');
+const weeklyWorkoutGoal = 3;
+
+function getWeeklyWorkoutProgress(referenceDate = selectedDate) {
+  const weekStart = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
+  weekStart.setDate(weekStart.getDate() - (weekStart.getDay() + 6) % 7);
+  let workoutDays = 0;
+  const day = new Date(weekStart);
+  for (let index = 0; index < 7; index++) {
+    const entries = workouts[dateKey(day)];
+    if (Array.isArray(entries) && entries.length > 0) workoutDays++;
+    if (index < 6) day.setDate(day.getDate() + 1);
+  }
+  return {
+    weekStart,
+    weekEnd: day,
+    workoutDays,
+    percent: Math.min(100, Math.round(workoutDays / weeklyWorkoutGoal * 100)),
+  };
+}
+
+function renderWeeklyWorkoutProgress() {
+  const { weekStart, weekEnd, workoutDays, percent } = getWeeklyWorkoutProgress();
+  const rangeOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+  document.getElementById('weekly-workout-range').textContent = `${weekStart.toLocaleDateString('en-US', rangeOptions)} – ${weekEnd.toLocaleDateString('en-US', rangeOptions)}`;
+  document.getElementById('weekly-workout-count').textContent = `${workoutDays} / ${weeklyWorkoutGoal} days`;
+  document.getElementById('weekly-workout-percent').textContent = `${percent}%`;
+  const progress = document.getElementById('weekly-workout-progress');
+  progress.setAttribute('aria-valuenow', String(percent));
+  progress.setAttribute('aria-valuetext', `${workoutDays} workout ${workoutDays === 1 ? 'day' : 'days'} logged; goal ${weeklyWorkoutGoal} days; ${percent}% complete`);
+  document.getElementById('weekly-workout-fill').style.transform = `scaleX(${percent / 100})`;
+}
 
 function renderCalendar() {
   monthTitle.textContent = displayedMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -80,6 +112,7 @@ function renderCalendar() {
     daysContainer.append(cell);
   }
   renderWorkout();
+  renderWeeklyWorkoutProgress();
 }
 
 function renderWorkout() {
@@ -101,12 +134,12 @@ function renderWorkout() {
     const details = document.createElement('span');
     details.textContent = entry.muscle === 'Cardio'
       ? `${entry.name} — ${entry.minutes} min · ${entry.kcal} kcal`
-      : `${currentExerciseName(entry.name)} — ${entry.weight} ${entry.unit}${entry.sets !== '' && entry.sets != null ? ` · ${entry.sets} ${Number(entry.sets) === 1 ? 'set' : 'sets'}` : entry.reps !== '' && entry.reps != null ? ` · ${entry.reps} ${Number(entry.reps) === 1 ? 'rep' : 'reps'}` : ''}`;
+      : `${displayExerciseName(entry)} — ${entry.weight} ${entry.unit}${entry.sets !== '' && entry.sets != null ? ` · ${entry.sets} ${Number(entry.sets) === 1 ? 'set' : 'sets'}` : entry.reps !== '' && entry.reps != null ? ` · ${entry.reps} ${Number(entry.reps) === 1 ? 'rep' : 'reps'}` : ''}`;
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.className = 'remove-entry';
     remove.textContent = '×';
-    remove.setAttribute('aria-label', `Remove ${currentExerciseName(entry.name)} from ${dateLabel(selectedDate)}`);
+    remove.setAttribute('aria-label', `Remove ${displayExerciseName(entry)} from ${dateLabel(selectedDate)}`);
     remove.addEventListener('click', () => removeWorkoutEntry(index));
     item.append(details, remove);
     list.append(item);
@@ -120,14 +153,16 @@ function removeWorkoutEntry(index) {
   const [removed] = entries.splice(index, 1);
   if (!entries.length) delete workouts[key];
   const exerciseName = removed.muscle === 'Core' && removed.name === 'Russian Trister' ? 'Russian Twists' : currentExerciseName(removed.name);
-  const exerciseIndex = exercisesByMuscle[removed.muscle]?.indexOf(exerciseName) ?? -1;
+  const exerciseIndex = removed.muscle === 'Custom' && removed.draftKey
+    ? Number(removed.draftKey.slice(7))
+    : getExerciseNames(removed.muscle).indexOf(exerciseName);
   if (exerciseIndex !== -1) delete exerciseLog[`${removed.muscle}-${exerciseIndex}`];
   let persisted = true;
   try { localStorage.setItem('form-workouts', JSON.stringify(workouts)); } catch { persisted = false; }
   try { localStorage.setItem(storageKey, JSON.stringify(exerciseLog)); } catch { persisted = false; }
   renderExercises();
   renderCalendar();
-  document.getElementById('workout-removal-status').textContent = `${currentExerciseName(removed.name)} removed from ${dateLabel(selectedDate)}.${persisted ? '' : ' Browser storage is unavailable; this removal will only last while the page is open.'}`;
+  document.getElementById('workout-removal-status').textContent = `${displayExerciseName(removed)} removed from ${dateLabel(selectedDate)}.${persisted ? '' : ' Browser storage is unavailable; this removal will only last while the page is open.'}`;
   const items = document.getElementById('workout-entries').children;
   if (items.length) items[Math.min(index, items.length - 1)].lastElementChild.focus();
   else document.getElementById('workout-summary').focus();
@@ -151,7 +186,17 @@ const exercisesByMuscle = {
   // Keep the retired slot so saved values for later Arms exercises stay aligned.
   Arms: ['Dumbbell Curl', 'Cable Curl', 'Barbell Curl', 'Dumbbell Hammer Curl', null, 'Cable Pushdown', 'Cable Overhead Extension', 'Dumbbell Triceps Kickback'],
   Core: ['Plank', 'Ab Rollouts', 'Russian Twists', 'Leg Raises', 'Crunches', 'Mountain Climbers', 'Bicycle Crunches'],
+  Custom: [],
 };
+
+function getExerciseNames(muscle) {
+  if (muscle !== 'Custom') return exercisesByMuscle[muscle] || [];
+  const names = [];
+  Object.keys(exerciseLog).forEach(key => {
+    if (/^Custom-\d+$/.test(key)) names[Number(key.slice(7))] = exerciseLog[key]?.name || '';
+  });
+  return names;
+}
 const exerciseImagesByMuscle = {
   Cardio: {
     'Incline Treadmill Walk': 'assets/muscles/incline-treadmill-walk.png',
@@ -237,20 +282,33 @@ function saveExercises() {
   }
 }
 
+function addCustomExercise() {
+  const index = getExerciseNames('Custom').length;
+  exerciseLog[`Custom-${index}`] = { name: '', selected: true, weight: '', sets: '', unit: weightUnit.value === 'lb' ? 'lb' : 'kg' };
+  saveExercises();
+  renderExercises();
+  document.getElementById(`custom-name-${index}`).focus();
+}
+
+document.getElementById('add-custom-exercise').addEventListener('click', addCustomExercise);
+
 function renderExercises() {
   exerciseList.replaceChildren();
-  exerciseModal.hidden = !modalOpen || !selectedMuscle || !exercisesByMuscle[selectedMuscle]?.length;
+  exerciseModal.hidden = !modalOpen || !selectedMuscle || (selectedMuscle !== 'Custom' && !exercisesByMuscle[selectedMuscle]?.length);
   document.body.classList.toggle('modal-open', !exerciseModal.hidden);
   if (exerciseModal.hidden) return;
   const isCardio = selectedMuscle === 'Cardio';
+  const isCustom = selectedMuscle === 'Custom';
+  document.getElementById('add-custom-exercise').hidden = !isCustom;
   exercisePanel.classList.toggle('cardio-panel', isCardio);
   weightUnitControl.hidden = isCardio;
   exerciseHelp.textContent = isCardio
     ? 'Select an activity and record the time and calories you burned.'
+    : isCustom ? 'Add any exercise, enter its name, weight and sets. Use 0 for bodyweight.'
     : 'Select your exercises and enter the weight you used and sets. Use 0 for bodyweight.';
   document.getElementById('exercise-title').textContent = `${selectedMuscle} exercises`;
-  exercisesByMuscle[selectedMuscle].forEach((name, index) => {
-    if (!name) return;
+  getExerciseNames(selectedMuscle).forEach((name, index) => {
+    if (!name && !isCustom) return;
     const key = `${selectedMuscle}-${index}`;
     const saved = exerciseLog[key];
     const entry = {
@@ -260,15 +318,17 @@ function renderExercises() {
       minutes: typeof saved?.minutes === 'string' ? saved.minutes : '',
       kcal: typeof saved?.kcal === 'string' ? saved.kcal : '',
       unit: saved?.unit === 'lb' ? 'lb' : 'kg',
+      ...(isCustom ? { name } : {}),
     };
     const row = document.createElement('div');
     row.className = 'exercise-row';
     row.classList.toggle('is-selected', entry.selected);
-    const label = document.createElement('label');
+    const label = document.createElement(isCustom ? 'div' : 'label');
     label.className = 'exercise-choice';
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = entry.selected;
+    if (isCustom) checkbox.setAttribute('aria-label', 'Include custom exercise in workout');
     const title = document.createElement('span');
     title.textContent = name;
     label.append(checkbox);
@@ -282,7 +342,26 @@ function renderExercises() {
       thumbnail.height = 1254;
       label.append(thumbnail);
     }
-    label.append(title);
+    if (isCustom) {
+      const nameLabel = document.createElement('label');
+      nameLabel.className = 'custom-exercise-name';
+      const nameTitle = document.createElement('span');
+      nameTitle.textContent = 'Exercise name';
+      const nameInput = document.createElement('input');
+      nameInput.id = `custom-name-${index}`;
+      nameInput.type = 'text';
+      nameInput.placeholder = 'e.g. Bulgarian Split Squat';
+      nameInput.value = name;
+      nameInput.required = entry.selected;
+      nameInput.addEventListener('input', () => {
+        entry.name = nameInput.value;
+        exerciseLog[key] = entry;
+        saveExercises();
+      });
+      checkbox.addEventListener('change', () => { nameInput.required = checkbox.checked; });
+      nameLabel.append(nameTitle, nameInput);
+      label.append(nameLabel);
+    } else label.append(title);
     const metrics = document.createElement('div');
     metrics.className = isCardio ? 'exercise-metrics cardio-metrics' : 'exercise-metrics';
     const createMetric = (labelText, value, property, step = 'any') => {
@@ -334,8 +413,8 @@ function renderExercises() {
 
 weightUnit.addEventListener('change', () => {
   if (!selectedMuscle || selectedMuscle === 'Cardio') return;
-  exercisesByMuscle[selectedMuscle].forEach((name, index) => {
-    if (!name) return;
+  getExerciseNames(selectedMuscle).forEach((name, index) => {
+    if (!name && selectedMuscle !== 'Custom') return;
     const key = `${selectedMuscle}-${index}`;
     const entry = exerciseLog[key] || { selected: false, weight: '', unit: 'kg' };
     const unit = weightUnit.value;
@@ -356,17 +435,27 @@ document.querySelectorAll('.muscle-card').forEach(card => {
     if (selectedMuscle !== 'Cardio') weightUnit.value = exerciseLog[`${selectedMuscle}-0`]?.unit === 'lb' ? 'lb' : 'kg';
     modalOpen = true;
     renderExercises();
+    if (selectedMuscle === 'Custom' && !getExerciseNames('Custom').length) addCustomExercise();
     document.getElementById('selection-status').textContent = `${selectedMuscle} exercises opened.`;
   });
 });
 document.getElementById('workout-form').addEventListener('submit', event => {
   event.preventDefault();
   const entries = [];
-  for (const [muscle, names] of Object.entries(exercisesByMuscle)) {
-    for (const [index, name] of names.entries()) {
-      if (!name) continue;
+  for (const muscle of Object.keys(exercisesByMuscle)) {
+    for (const [index, storedName] of getExerciseNames(muscle).entries()) {
+      if (!storedName && muscle !== 'Custom') continue;
       const entry = exerciseLog[`${muscle}-${index}`];
       if (!entry?.selected) continue;
+      const name = muscle === 'Custom' ? (entry.name || '').trim() : storedName;
+      if (!name) {
+        selectedMuscle = muscle;
+        modalOpen = true;
+        renderExercises();
+        document.getElementById('exercise-save-status').textContent = 'Enter a name for each selected custom exercise before submitting.';
+        document.getElementById(`custom-name-${index}`).focus();
+        return;
+      }
       const properties = muscle === 'Cardio' ? ['minutes', 'kcal'] : ['weight', 'sets'];
       if (properties.some(property => {
         const value = entry[property];
@@ -384,7 +473,7 @@ document.getElementById('workout-form').addEventListener('submit', event => {
         document.getElementById('workout-form').reportValidity();
         return;
       }
-      entries.push({ ...entry, muscle, name });
+      entries.push({ ...entry, muscle, name, ...(muscle === 'Custom' ? { draftKey: `Custom-${index}` } : {}) });
     }
   }
   if (!entries.length) {

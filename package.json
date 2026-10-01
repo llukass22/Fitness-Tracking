@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node server.cjs"
+    "start": "node server.cjs",
+    "test": "node tests/weekly-progress.test.cjs"
   }
 }

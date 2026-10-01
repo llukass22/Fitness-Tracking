@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#101110" />
   <meta name="description" content="A simple home for your gym sessions." />
-  <title>Form — Your training space</title>
+  <title>tracked. — Your training space</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -22,23 +22,37 @@
   </defs></svg>
   <div class="app-shell">
     <header class="site-header">
-      <a class="brand" href="./" aria-label="Form home"><span class="brand-mark"><i></i><i></i><i></i></span>form<span class="brand-dot">.</span></a>
+      <a class="brand" href="./" aria-label="tracked home"><span class="brand-mark"><i></i><i></i><i></i></span>tracked<span class="brand-dot">.</span></a>
       <span class="header-label">YOUR TRAINING SPACE</span>
       <div class="profile" aria-label="Your profile">YOU<span></span></div>
     </header>
     <main>
       <section class="intro">
-        <div><h1>Track Your Progress<span>.</span></h1></div>
+        <div><h1>The Training Journal<span>.</span></h1></div>
         <div class="intro-note"><span class="note-line"></span><p>YOUR ONLY COMPETITION<br /><strong>is who you were yesterday.</strong></p></div>
       </section>
       <div class="dashboard">
         <section class="calendar-section" aria-label="Calendar">
           <div class="calendar-card">
-            <div class="calendar-top"><div><p class="small-label">THE TRAINING JOURNAL</p><h3 id="month-title"></h3></div><div class="month-controls"><button id="previous-month" aria-label="Previous month"><svg><use href="#chevron"/></svg></button><button id="next-month" aria-label="Next month"><svg><use href="#chevron"/></svg></button></div></div>
+            <div class="calendar-top"><div><h3 id="month-title"></h3></div><div class="month-controls"><button id="previous-month" aria-label="Previous month"><svg><use href="#chevron"/></svg></button><button id="next-month" aria-label="Next month"><svg><use href="#chevron"/></svg></button></div></div>
             <div class="weekdays" aria-hidden="true"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
             <div id="calendar-days" class="calendar-days" aria-labelledby="month-title"></div>
 
           </div>
+          <section class="weekly-workout-card" aria-labelledby="weekly-workout-title">
+            <div class="weekly-workout-heading">
+              <h2 id="weekly-workout-title">Weekly workout progress</h2>
+              <span id="weekly-workout-percent" class="weekly-workout-percent">0%</span>
+            </div>
+            <p id="weekly-workout-range" class="weekly-workout-range"></p>
+            <div id="weekly-workout-progress" class="weekly-workout-track" role="progressbar" aria-labelledby="weekly-workout-title" aria-describedby="weekly-workout-range" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <div id="weekly-workout-fill" class="weekly-workout-fill"></div>
+            </div>
+            <div class="weekly-workout-meta">
+              <span id="weekly-workout-count" aria-live="polite" aria-atomic="true">0 / 3 days</span>
+              <span>Goal: 3 days per week</span>
+            </div>
+          </section>
           <div class="small-note"><span>↳</span> Consistency starts with showing up.</div>
           <section class="workout-details" aria-labelledby="workout-date">
             <h3 id="workout-date"></h3>
@@ -58,6 +72,7 @@
             <button class="muscle-card" data-muscle="Core"><span class="card-top"><span class="muscle-icon"><img src="assets/muscles/core.png" alt="" width="1280" height="1280" /></span></span><span class="card-bottom"><span><strong>Core</strong></span></span></button>
             <button class="muscle-card" data-muscle="Arms"><span class="card-top"><span class="muscle-icon"><img src="assets/muscles/arms.png" alt="" width="1280" height="1280" /></span></span><span class="card-bottom"><span><strong>Arms</strong></span></span></button>
             <button class="muscle-card" data-muscle="Cardio"><span class="card-top"><span class="muscle-icon"><img src="assets/muscles/cardio.png" alt="" width="1280" height="1280" /></span></span><span class="card-bottom"><span><strong>Cardio</strong></span></span></button>
+            <button class="muscle-card" data-muscle="Custom"><span class="card-top"><span class="muscle-icon custom-icon"><svg viewBox="0 0 128 128" aria-hidden="true"><circle cx="64" cy="64" r="48"/><path d="M64 40v48M40 64h48"/></svg></span></span><span class="card-bottom"><span><strong>Custom</strong></span></span></button>
           </div>
           <p class="selection-status" id="selection-status" aria-live="polite"></p>
           <div class="exercise-modal" id="exercise-modal" hidden>
@@ -67,6 +82,7 @@
             <p class="exercise-help" id="exercise-help">Select your exercises and enter the weight you used. Use 0 for bodyweight.</p>
             <form id="workout-form">
               <div id="exercise-list" class="exercise-list"></div>
+              <button class="add-custom-exercise" id="add-custom-exercise" type="button" hidden><span aria-hidden="true">＋</span> Add exercise</button>
               <button class="submit-workout" type="submit">Submit workout</button>
             </form>
             <p class="exercise-save-status" id="exercise-save-status" aria-live="polite">Select exercises, enter your values, then submit your workout.</p>
@@ -74,7 +90,7 @@
           </div>
         </section>
       </div>
-      <footer class="page-footer"><span>LESS SCROLLING. MORE LIFTING.</span><span class="footer-brand">form.</span><span>BUILT FOR YOUR EVERYDAY.</span></footer>
+      <footer class="page-footer"><span>LESS SCROLLING. MORE LIFTING.</span><span class="footer-brand">tracked.</span><span>BUILT FOR YOUR EVERYDAY.</span></footer>
     </main>
   </div>
   <div class="submission-confirmation" id="submission-confirmation" role="status" aria-live="polite" hidden>
