@@ -190,13 +190,13 @@ function renderWorkout() {
   entries.forEach((entry, index) => {
     const item = document.createElement('li');
     const details = document.createElement('span');
-    details.textContent = entry.muscle === 'Cardio'
-      ? `${entry.name} — ${entry.minutes} min · ${entry.kcal} kcal`
-      : `${displayExerciseName(entry)} — ${entry.weight} ${entry.unit}${entry.sets !== '' && entry.sets != null ? ` · ${entry.sets} ${Number(entry.sets) === 1 ? 'set' : 'sets'}` : entry.reps !== '' && entry.reps != null ? ` · ${entry.reps} ${Number(entry.reps) === 1 ? 'rep' : 'reps'}` : ''}`;
-    if (entry.muscle === 'Custom') {
-      if (entry.minutes !== '' && entry.minutes != null) details.textContent += ` · ${entry.minutes} min`;
-      if (entry.kcal !== '' && entry.kcal != null) details.textContent += ` · ${entry.kcal} kcal`;
-    }
+    const values = [];
+    if (entry.muscle !== 'Cardio' && entry.weight !== '' && entry.weight != null) values.push(`${entry.weight} ${entry.unit}`);
+    if (entry.muscle !== 'Cardio' && entry.sets !== '' && entry.sets != null) values.push(`${entry.sets} ${Number(entry.sets) === 1 ? 'set' : 'sets'}`);
+    else if (entry.muscle !== 'Cardio' && entry.reps !== '' && entry.reps != null) values.push(`${entry.reps} ${Number(entry.reps) === 1 ? 'rep' : 'reps'}`);
+    if ((entry.muscle === 'Cardio' || entry.muscle === 'Custom') && entry.minutes !== '' && entry.minutes != null) values.push(`${entry.minutes} min`);
+    if ((entry.muscle === 'Cardio' || entry.muscle === 'Custom') && entry.kcal !== '' && entry.kcal != null) values.push(`${entry.kcal} kcal`);
+    details.textContent = `${displayExerciseName(entry)} — ${values.join(' · ')}`;
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.className = 'remove-entry';
@@ -364,9 +364,9 @@ function renderExercises() {
   exercisePanel.classList.toggle('cardio-panel', isCardio);
   weightUnitControl.hidden = isCardio;
   exerciseHelp.textContent = isCardio
-    ? 'Select an activity and record the time and calories you burned.'
-    : isCustom ? 'Add any exercise and enter its weight. Sets, minutes and burned calories are optional. Use 0 for bodyweight.'
-    : 'Select your exercises and enter the weight you used and sets. Use 0 for bodyweight.';
+    ? 'Select an activity and enter minutes, burned calories, or both.'
+    : isCustom ? 'Add any exercise and fill in at least one value: weight, sets, minutes or burned kcal. Use 0 for bodyweight.'
+    : 'Select your exercises and enter weight, sets, or both. Use 0 for bodyweight.';
   document.getElementById('exercise-title').textContent = `${selectedMuscle} exercises`;
   getExerciseNames(selectedMuscle).forEach((name, index) => {
     if (!name && !isCustom) return;
@@ -439,7 +439,7 @@ function renderExercises() {
       input.placeholder = '0';
       input.value = value;
       input.disabled = !entry.selected;
-      input.required = property !== 'sets' && !(isCustom && ['minutes', 'kcal'].includes(property));
+      input.required = false;
       input.setAttribute('aria-label', `${name} ${labelText}`);
       input.addEventListener('input', () => {
         entry[property] = input.value;
@@ -482,7 +482,7 @@ weightUnit.addEventListener('change', () => {
     const key = `${selectedMuscle}-${index}`;
     const entry = exerciseLog[key] || { selected: false, weight: '', unit: 'kg' };
     const unit = weightUnit.value;
-    if (entry.weight !== '' && entry.unit !== unit) {
+    if (entry.weight !== '' && entry.weight != null && entry.unit !== unit) {
       const converted = Number(entry.weight) * (unit === 'lb' ? 2.2046226218 : 1 / 2.2046226218);
       entry.weight = String(Math.round(converted * 100) / 100);
     }
@@ -522,20 +522,18 @@ document.getElementById('workout-form').addEventListener('submit', async event =
         return;
       }
       const properties = muscle === 'Cardio' ? ['minutes', 'kcal'] : muscle === 'Custom' ? ['weight', 'sets', 'minutes', 'kcal'] : ['weight', 'sets'];
-      if (properties.some(property => {
+      const hasValue = property => entry[property] !== '' && entry[property] != null;
+      if (!properties.some(hasValue) || properties.some(property => {
         const value = entry[property];
-        if ((property === 'sets' || (muscle === 'Custom' && ['minutes', 'kcal'].includes(property))) && (value === '' || value == null)) return false;
-        return value === '' || value == null || !Number.isFinite(Number(value)) || Number(value) < 0
+        if (!hasValue(property)) return false;
+        return !Number.isFinite(Number(value)) || Number(value) < 0
           || (property !== 'weight' && !Number.isInteger(Number(value)));
       })) {
         selectedMuscle = muscle;
         modalOpen = true;
         weightUnit.value = exerciseLog[`${muscle}-0`]?.unit === 'lb' ? 'lb' : 'kg';
         renderExercises();
-        document.getElementById('exercise-save-status').textContent = muscle === 'Cardio'
-          ? `Enter valid minutes and calories for ${name} before submitting.`
-          : muscle === 'Custom' ? `Enter a valid weight for ${name}. Sets, minutes and burned kcal must be non-negative whole numbers when entered.`
-          : `Enter a valid weight for ${name}. Sets must be a non-negative whole number when entered.`;
+        document.getElementById('exercise-save-status').textContent = `Enter at least one value for ${name}. Weight must be non-negative; sets, minutes and burned kcal must be non-negative whole numbers when entered.`;
         document.getElementById('workout-form').reportValidity();
         return;
       }

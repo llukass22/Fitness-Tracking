@@ -2,7 +2,7 @@
 
 A mobile-first training journal with email/password accounts and shared MariaDB/MySQL workout storage. Sign in with the same account on your phone and computer to access the same submitted workouts. Use **Refresh** to fetch changes made on another device.
 
-Choose a calendar day, select exercises, enter weight and optional sets (or cardio minutes and calories), then submit. Submitting replaces that day's workout. Remove individual entries from the workout details. Weekly progress counts submitted days in the selected Monday–Sunday week, with a goal of three days.
+Choose a calendar day, select exercises, and enter at least one value for each: weight or sets for strength exercises; minutes or burned kcal for cardio; any of those four for a custom exercise. Submitting replaces that day's workout. Remove individual entries from the workout details. Weekly progress counts submitted days in the selected Monday–Sunday week, with a goal of three days.
 
 Submitted workouts are saved on the server. Drafts stay in the current browser, separately for each account and date. Existing `form-workouts` and `form-exercises-*` browser data is ignored; there is no import. On another device, selecting a logged day seeds a new draft from its saved workout. Failed saves keep the draft and do not report success. If another device edited the same day, a save conflict asks you to reload; use Refresh before reviewing and resubmitting your draft.
 

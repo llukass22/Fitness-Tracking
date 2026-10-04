@@ -52,6 +52,21 @@ test('custom time and calories survive validation while blank legacy values rema
   }
 });
 
+test('each exercise needs one valid metric, with no particular metric required', () => {
+  for (const [muscle, fields] of [
+    ['Back', ['weight', 'sets']],
+    ['Cardio', ['minutes', 'kcal']],
+    ['Custom', ['weight', 'sets', 'minutes', 'kcal']],
+  ]) {
+    for (const field of fields) {
+      const entry = { muscle, name: 'Exercise', unit: 'kg', [field]: '0' };
+      assert.equal(validateEntries([entry])[0][field], '0');
+    }
+    assert.throws(() => validateEntries([{ muscle, name: 'Exercise', unit: 'kg' }]));
+  }
+  assert.throws(() => validateEntries([{ muscle: 'Custom', name: 'Exercise', unit: 'kg', sets: '2', minutes: '1.5' }]));
+});
+
 test('password hashing and validation reject malformed input', async () => {
   const hash = await hashPassword('a long password');
   assert.notEqual(hash, 'a long password');

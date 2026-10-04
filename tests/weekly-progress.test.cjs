@@ -22,6 +22,7 @@ function loadApp(stored = {}, initialWorkouts = {}) {
     replaceChildren() { this.children = []; }
     get lastElementChild() { return this.children.at(-1); }
     focus() {}
+    reportValidity() { return true; }
   }
   const elements = new Map();
   const element = id => {
@@ -189,6 +190,28 @@ test('custom exercise submission rejects blank names and invalid weights or sets
   const entries = JSON.parse(app.run('JSON.stringify(workouts)'))[app.run('dateKey(selectedDate)')];
   assert.equal(entries[0].name, 'My exercise');
   assert.equal(entries[0].weight, '0');
+});
+
+test('submits strength, cardio and custom exercises with any one filled metric', async () => {
+  for (const [key, entry, expected] of [
+    ['Back-0', { selected: true, weight: '', sets: '3', unit: 'kg' }, '3 sets'],
+    ['Cardio-0', { selected: true, minutes: '', kcal: '120' }, '120 kcal'],
+    ['Custom-0', { selected: true, name: 'Stretching', weight: '', sets: '', minutes: '15', kcal: '', unit: 'kg' }, '15 min'],
+  ]) {
+    const app = loadApp();
+    const submit = () => app.element('workout-form').listeners.submit({ preventDefault() {} });
+    app.run(`exerciseLog[${JSON.stringify(key)}] = ${JSON.stringify(entry)};`);
+    await submit();
+    const saved = JSON.parse(app.run('JSON.stringify(workouts)'))[app.run('dateKey(selectedDate)')];
+    assert.equal(saved.length, 1);
+    assert.match(app.element('workout-entries').children[0].children[0].textContent, new RegExp(expected));
+    assert.equal(app.element('workout-entries').children[0].children[0].textContent.includes('undefined'), false);
+  }
+  const app = loadApp();
+  app.run(`exerciseLog['Back-0'] = { selected: true, weight: '', sets: '', unit: 'kg' };`);
+  await app.element('workout-form').listeners.submit({ preventDefault() {} });
+  assert.equal(app.run('Object.keys(workouts).length'), 0);
+  assert.match(app.element('exercise-save-status').textContent, /at least one value/);
 });
 
 test('failed saves preserve drafts and never create a submitted workout', async () => {
