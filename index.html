@@ -29,7 +29,6 @@
   <div class="app-shell">
     <header class="site-header">
       <a class="brand" href="./" aria-label="tracked home"><span class="brand-mark"><i></i><i></i><i></i></span>tracked<span class="brand-dot">.</span></a>
-      <span class="header-label">YOUR TRAINING SPACE</span>
       <div class="account-controls"><button id="install-app" type="button" hidden>Install app</button><span id="account-email"></span><button id="refresh-workouts" type="button" hidden>Refresh</button><button id="sign-out" type="button" hidden>Sign out</button></div>
     </header>
     <section class="account-card" id="account-card" aria-labelledby="account-title">
@@ -37,7 +36,7 @@
       <p>Sign in to access your workouts on any device.</p>
       <form id="account-form">
         <label>Email<input id="account-email-input" type="email" autocomplete="username" required maxlength="254" /></label>
-        <label>Password<input id="account-password" type="password" autocomplete="current-password" required minlength="12" maxlength="128" /></label>
+        <label>Password<input id="account-password" type="password" autocomplete="current-password" required minlength="4" maxlength="128" /></label>
         <button id="account-submit" type="submit">Sign in</button>
         <button id="account-toggle" type="button">Create an account</button>
       </form>

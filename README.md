@@ -26,7 +26,7 @@ Submitted workouts are saved on the server. Drafts stay in the current browser, 
    Use Hostinger's actual database host if it differs from `localhost`. `APP_ORIGIN` must exactly match the address you visit, including `www` if applicable, with no trailing slash or path. Redirect other domain variants to that canonical address. Production requires HTTPS and uses Secure session cookies. Credentials belong in runtime settings, never browser JavaScript or committed files.
 
 4. Start/restart the app. It creates the tables in `schema.sql` automatically using the database user's permissions. Alternatively, run that SQL in phpMyAdmin first. Missing credentials or database initialization errors prevent startup.
-5. Open your HTTPS site and create an account with a password of 12–128 characters. For a personal tracker, set `ALLOW_REGISTRATION=false` after creating the accounts you need, then restart. Existing accounts can still sign in.
+5. Open your HTTPS site and create an account with a password of 4–128 characters. For a personal tracker, set `ALLOW_REGISTRATION=false` after creating the accounts you need, then restart. Existing accounts can still sign in.
 6. Sign in on a second device, submit a workout on the first, then click Refresh on the second. Verify the exercises and weekly progress match. Test removal and sign-out as well.
 
 Deploy the Node.js backend with the frontend; uploading HTML/CSS/JS alone does not provide shared storage. No Hostinger credentials are included in this repository.

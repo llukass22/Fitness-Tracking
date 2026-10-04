@@ -107,14 +107,16 @@ test('HTTP accounts isolate workouts, enforce origin and sessions, and reject st
     assert.equal((await call('/api/workouts')).status, 401);
     assert.equal((await call('/api/register', 'POST', {}, null, 'https://evil.example')).status, 403);
     assert.equal((await call('/api/register', 'POST', '{')).status, 400);
-    const account = await call('/api/register', 'POST', { email: 'USER@example.com', password: 'correct horse battery' });
+    assert.equal((await call('/api/register', 'POST', { email: 'user@example.com', password: 'abc' })).status, 400);
+    assert.equal((await call('/api/register', 'POST', { email: 'user@example.com', password: 'a'.repeat(129) })).status, 400);
+    const account = await call('/api/register', 'POST', { email: 'USER@example.com', password: 'abcd' });
     assert.equal(account.status, 200);
     assert.match(account.cookie, /HttpOnly; SameSite=Lax/);
     assert.match(account.cookie, /; Secure/);
     const cookie = account.cookie.split(';')[0];
     assert.equal((await call('/api/session', 'GET', undefined, cookie)).body.user.email, 'user@example.com');
     assert.equal((await call('/api/login', 'POST', { email: 'user@example.com', password: 'incorrect password' })).status, 401);
-    assert.equal((await call('/api/login', 'POST', { email: 'user@example.com', password: 'correct horse battery' })).status, 200);
+    assert.equal((await call('/api/login', 'POST', { email: 'user@example.com', password: 'abcd' })).status, 200);
     const saved = await call('/api/workouts/2026-9-28', 'PUT', { entries: [exercise], version: 0 }, cookie);
     assert.equal(saved.status, 200);
     assert.equal(saved.body.version, 1);

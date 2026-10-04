@@ -85,7 +85,7 @@ function createApi(db, { origin, secure = false, registration = true } = {}) {
         const body = await readBody(request);
         const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
         const password = body.password;
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || typeof password !== 'string' || password.length < 12 || password.length > 128) throw fail(400, 'Use a valid email and a password of 12–128 characters.');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || typeof password !== 'string' || password.length < 4 || password.length > 128) throw fail(400, 'Use a valid email and a password of 4–128 characters.');
         let user;
         if (pathname === '/api/register') {
           if (!registration) throw fail(403, 'Account creation is disabled.');
