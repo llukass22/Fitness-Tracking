@@ -197,6 +197,8 @@ test('submits strength, cardio and custom exercises with any one filled metric',
     ['Back-0', { selected: true, weight: '', sets: '3', unit: 'kg' }, '3 sets'],
     ['Cardio-0', { selected: true, minutes: '', kcal: '120' }, '120 kcal'],
     ['Custom-0', { selected: true, name: 'Stretching', weight: '', sets: '', minutes: '15', kcal: '', unit: 'kg' }, '15 min'],
+    ['Cardio-0', { selected: true, minutes: '', kcal: '', distance: '5.5' }, '5.5 km'],
+    ['Custom-0', { selected: true, name: 'Hiking', weight: '', sets: '', minutes: '', kcal: '', distance: '2.75', unit: 'kg' }, '2.75 km'],
   ]) {
     const app = loadApp();
     const submit = () => app.element('workout-form').listeners.submit({ preventDefault() {} });

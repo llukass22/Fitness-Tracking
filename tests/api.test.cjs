@@ -55,8 +55,8 @@ test('custom time and calories survive validation while blank legacy values rema
 test('each exercise needs one valid metric, with no particular metric required', () => {
   for (const [muscle, fields] of [
     ['Back', ['weight', 'sets']],
-    ['Cardio', ['minutes', 'kcal']],
-    ['Custom', ['weight', 'sets', 'minutes', 'kcal']],
+    ['Cardio', ['minutes', 'kcal', 'distance']],
+    ['Custom', ['weight', 'sets', 'minutes', 'kcal', 'distance']],
   ]) {
     for (const field of fields) {
       const entry = { muscle, name: 'Exercise', unit: 'kg', [field]: '0' };
@@ -65,6 +65,13 @@ test('each exercise needs one valid metric, with no particular metric required',
     assert.throws(() => validateEntries([{ muscle, name: 'Exercise', unit: 'kg' }]));
   }
   assert.throws(() => validateEntries([{ muscle: 'Custom', name: 'Exercise', unit: 'kg', sets: '2', minutes: '1.5' }]));
+  for (const muscle of ['Cardio', 'Custom']) {
+    const entry = { muscle, name: 'Exercise', unit: 'kg', distance: '2.75' };
+    assert.equal(validateEntries([entry])[0].distance, '2.75');
+    assert.equal(validateEntries([{ ...entry, distance: '0' }])[0].distance, '0');
+    for (const distance of ['-1', 'invalid', '1000001']) assert.throws(() => validateEntries([{ ...entry, distance }]));
+    assert.equal(validateEntries([{ ...entry, distance: '', minutes: '20' }])[0].distance, '');
+  }
 });
 
 test('password hashing and validation reject malformed input', async () => {

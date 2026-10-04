@@ -31,16 +31,16 @@ function validateEntries(entries) {
   return entries.map(entry => {
     if (!entry || !groups.includes(entry.muscle) || typeof entry.name !== 'string' || !entry.name.trim() || entry.name.length > 160) throw fail(400, 'Invalid exercise name or category.');
     const clean = { muscle: entry.muscle, name: entry.name.trim() };
-    if (entry.muscle === 'Cardio') Object.assign(clean, { minutes: metric(entry.minutes, true, true), kcal: metric(entry.kcal, true, true) });
+    if (entry.muscle === 'Cardio') Object.assign(clean, { minutes: metric(entry.minutes, true, true), kcal: metric(entry.kcal, true, true), distance: metric(entry.distance, false, true) });
     else {
       if (!['kg', 'lb'].includes(entry.unit)) throw fail(400, 'Invalid weight unit.');
       Object.assign(clean, { weight: metric(entry.weight, false, true), sets: metric(entry.sets, true, true), unit: entry.unit });
     }
     if (entry.muscle === 'Custom') {
-      Object.assign(clean, { minutes: metric(entry.minutes, true, true), kcal: metric(entry.kcal, true, true) });
+      Object.assign(clean, { minutes: metric(entry.minutes, true, true), kcal: metric(entry.kcal, true, true), distance: metric(entry.distance, false, true) });
       if (typeof entry.draftKey === 'string' && /^Custom-\d{1,4}$/.test(entry.draftKey)) clean.draftKey = entry.draftKey;
     }
-    const fields = entry.muscle === 'Cardio' ? ['minutes', 'kcal'] : entry.muscle === 'Custom' ? ['weight', 'sets', 'minutes', 'kcal'] : ['weight', 'sets'];
+    const fields = entry.muscle === 'Cardio' ? ['minutes', 'kcal', 'distance'] : entry.muscle === 'Custom' ? ['weight', 'sets', 'minutes', 'kcal', 'distance'] : ['weight', 'sets'];
     if (!fields.some(field => clean[field] !== '')) throw fail(400, 'Enter at least one exercise value.');
     return clean;
   });
