@@ -36,7 +36,10 @@ function validateEntries(entries) {
       if (!['kg', 'lb'].includes(entry.unit)) throw fail(400, 'Invalid weight unit.');
       Object.assign(clean, { weight: metric(entry.weight), sets: metric(entry.sets, true, true), unit: entry.unit });
     }
-    if (entry.muscle === 'Custom' && typeof entry.draftKey === 'string' && /^Custom-\d{1,4}$/.test(entry.draftKey)) clean.draftKey = entry.draftKey;
+    if (entry.muscle === 'Custom') {
+      Object.assign(clean, { minutes: metric(entry.minutes, true, true), kcal: metric(entry.kcal, true, true) });
+      if (typeof entry.draftKey === 'string' && /^Custom-\d{1,4}$/.test(entry.draftKey)) clean.draftKey = entry.draftKey;
+    }
     return clean;
   });
 }

@@ -35,7 +35,22 @@ function memoryDatabase() {
     throw new Error('Unexpected SQL: ' + sql);
   } };
 }
-const exercise = { muscle: 'Custom', name: 'Squat', weight: '20', sets: '3', unit: 'kg', draftKey: 'Custom-0' };
+const exercise = { muscle: 'Custom', name: 'Squat', weight: '20', sets: '3', unit: 'kg', minutes: '15', kcal: '100', draftKey: 'Custom-0' };
+
+test('custom time and calories survive validation while blank legacy values remain optional', () => {
+  const clean = validateEntries([exercise])[0];
+  assert.equal(clean.minutes, '15');
+  assert.equal(clean.kcal, '100');
+  const legacy = { ...exercise };
+  delete legacy.minutes;
+  delete legacy.kcal;
+  assert.equal(validateEntries([legacy])[0].minutes, '');
+  assert.equal(validateEntries([legacy])[0].kcal, '');
+  for (const field of ['minutes', 'kcal']) {
+    for (const value of [-1, 1.5, 'invalid']) assert.throws(() => validateEntries([{ ...exercise, [field]: value }]));
+    assert.equal(validateEntries([{ ...exercise, [field]: '0' }])[0][field], '0');
+  }
+});
 
 test('password hashing and validation reject malformed input', async () => {
   const hash = await hashPassword('a long password');

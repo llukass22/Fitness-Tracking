@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const { connectDatabase } = require('./db.cjs');
+const { createLocalDatabase } = require('./local-db.cjs');
 const { createApi } = require('./api.cjs');
 let api;
 const port = Number(process.env.PORT || 5173);
@@ -45,13 +46,16 @@ server.on('error', (error) => {
 
 async function start() {
   const production = process.env.NODE_ENV === 'production';
+  const databaseKeys = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'];
+  const configuredKeys = databaseKeys.filter(key => process.env[key]);
+  const localStorage = !production && configuredKeys.length === 0;
   const origin = process.env.APP_ORIGIN || `http://localhost:${port}`;
   if (production && (!process.env.APP_ORIGIN || !origin.startsWith('https://'))) throw new Error('Set APP_ORIGIN to your HTTPS domain in production.');
   if (new URL(origin).origin !== origin) throw new Error('APP_ORIGIN must be an origin without a trailing slash or path.');
-  const db = await connectDatabase();
+  const db = localStorage ? createLocalDatabase() : await connectDatabase();
   api = createApi(db, { origin, secure: production, registration: process.env.ALLOW_REGISTRATION !== 'false' });
-  server.listen(port, '0.0.0.0', () => {
-    console.log(`Training journal listening on port ${port}`);
+  server.listen(port, localStorage ? '127.0.0.1' : '0.0.0.0', () => {
+    console.log(`Training journal listening at ${origin} (${localStorage ? 'local file storage' : 'MySQL/MariaDB'})`);
   });
 }
 start().catch(error => { console.error(error.message); process.exitCode = 1; });

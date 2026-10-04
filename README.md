@@ -33,13 +33,15 @@ Deploy the Node.js backend with the frontend; uploading HTML/CSS/JS alone does n
 
 ## Local development
 
-Use Node.js 22+ and a local or development MariaDB/MySQL database. Copy `.env.example` to `.env`, fill in database credentials, and keep `NODE_ENV=development`. Install with `npm ci`, then run:
+Use Node.js 22+ and install dependencies with `npm ci`. For an interface preview without MySQL, run `npm start` with no `DB_*` environment variables. Open `http://localhost:5173` and create a local account. Accounts and submitted workouts are saved in `.local-data/db.json`, which is ignored by Git. This mode listens only on `127.0.0.1` and is intended for this computer; it does not share data with your hosted MySQL/MariaDB database.
+
+To use a local or development MariaDB/MySQL database instead, copy `.env.example` to `.env`, fill in the database credentials, keep `NODE_ENV=development`, then run:
 
 ```text
 node --env-file=.env server.cjs
 ```
 
-Open `http://localhost:5173`. `npm start` reads environment variables supplied by the shell or hosting platform; it does not automatically load `.env`. For phone testing on your LAN, set `APP_ORIGIN` to the exact LAN URL you will visit and open that same URL on both devices. Local HTTP cookies are allowed outside production.
+Open `http://localhost:5173`. `npm start` reads environment variables supplied by the shell or hosting platform; it does not automatically load `.env`. If any database credential is set, all four required credentials must be set or startup fails. In production, MySQL/MariaDB is always required; local file storage cannot be selected. For phone testing on your LAN, use MySQL/MariaDB and set `APP_ORIGIN` to the exact LAN URL you will visit. Local HTTP cookies are allowed outside production.
 
 ## Data and accounts
 

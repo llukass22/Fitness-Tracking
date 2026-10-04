@@ -140,6 +140,12 @@ test('custom exercises preserve names, convert weights, reload drafts and remove
     const sets = row.children[1].children[1].children[1];
     sets.value = '3';
     sets.listeners.input();
+    const minutes = row.children[1].children[2].children[1];
+    minutes.value = '15';
+    minutes.listeners.input();
+    const kcal = row.children[1].children[3].children[1];
+    kcal.value = '100';
+    kcal.listeners.input();
   });
   app.element('weight-unit').value = 'lb';
   app.element('weight-unit').listeners.change();
@@ -154,7 +160,10 @@ test('custom exercises preserve names, convert weights, reload drafts and remove
   assert.equal(entries[0].muscle, 'Custom');
   assert.equal(entries[0].sets, '3');
   assert.equal(entries[0].unit, 'lb');
+  assert.equal(entries[0].minutes, '15');
+  assert.equal(entries[0].kcal, '100');
   assert.match(reloaded.element('workout-entries').children[0].children[0].textContent, /^Calf Press — 22.05 lb/);
+  assert.match(reloaded.element('workout-entries').children[0].children[0].textContent, /15 min · 100 kcal$/);
   await reloaded.run('removeWorkoutEntry(1)');
   assert.equal(reloaded.run("exerciseLog['Custom-1']"), undefined);
   assert.equal(reloaded.run("exerciseLog['Custom-0'].name"), 'Calf Press');
@@ -170,12 +179,12 @@ test('custom exercise submission rejects blank names and invalid weights or sets
   assert.match(app.element('exercise-save-status').textContent, /Enter a name/);
   assert.equal(app.storage.get('form-workouts'), undefined);
   app.element('workout-form').reportValidity = () => {};
-  for (const values of [{ weight: '-1', sets: '3' }, { weight: '10', sets: '1.5' }]) {
+  for (const values of [{ weight: '-1', sets: '3' }, { weight: '10', sets: '1.5' }, { weight: '10', sets: '3', minutes: '-1' }, { minutes: '1.5' }, { minutes: '0', kcal: '-1' }, { kcal: '2.5' }]) {
     app.run(`Object.assign(exerciseLog['Custom-0'], { name: ' My exercise ', ...${JSON.stringify(values)} });`);
     await submit();
-    assert.equal(app.storage.get('form-workouts'), undefined);
+    assert.equal(app.run('Object.keys(workouts).length'), 0);
   }
-  app.run(`Object.assign(exerciseLog['Custom-0'], { weight: '0', sets: '' });`);
+  app.run(`Object.assign(exerciseLog['Custom-0'], { weight: '0', sets: '', minutes: '', kcal: '' });`);
   await submit();
   const entries = JSON.parse(app.run('JSON.stringify(workouts)'))[app.run('dateKey(selectedDate)')];
   assert.equal(entries[0].name, 'My exercise');
