@@ -31,6 +31,14 @@ Submitted workouts are saved on the server. Drafts stay in the current browser, 
 
 Deploy the Node.js backend with the frontend; uploading HTML/CSS/JS alone does not provide shared storage. No Hostinger credentials are included in this repository.
 
+## Install as an app (PWA)
+
+The HTTPS site can be installed as **tracked.** and launches in a standalone window. In supported Chrome/Edge browsers, use **Install app** when it appears, or the browser's install menu. On iPhone/iPad, open the site in Safari, choose **Share → Add to Home Screen**, and enable **Open as Web App** if offered.
+
+This release requires an internet connection for sign-in and shared workout access. It does not register a service worker, cache the app for offline use, or queue offline saves. Drafts continue to use the existing per-account browser storage. Deploy the manifest, `pwa.js`, and `assets/icons/` with the rest of the app; no new dependency or build step is required.
+
+For installation verification, use the HTTPS deployment (or localhost on this computer). Check the manifest in browser developer tools, install the app, and launch it from its icon to confirm standalone display. Verify sign-in, save, Refresh, and sign-out against the hosted database. An ordinary HTTP LAN address does not support PWA installation.
+
 ## Local development
 
 Use Node.js 22+ and install dependencies with `npm ci`. For an interface preview without MySQL, run `npm start` with no `DB_*` environment variables. Open `http://localhost:5173` and create a local account. Accounts and submitted workouts are saved in `.local-data/db.json`, which is ignored by Git. This mode listens only on `127.0.0.1` and is intended for this computer; it does not share data with your hosted MySQL/MariaDB database.

@@ -12,7 +12,12 @@ const files = {
   '/index.html': ['index.html', 'text/html; charset=utf-8'],
   '/styles.css': ['styles.css', 'text/css; charset=utf-8'],
   '/app.js': ['app.js', 'text/javascript; charset=utf-8'],
+  '/pwa.js': ['pwa.js', 'text/javascript; charset=utf-8'],
+  '/manifest.webmanifest': ['manifest.webmanifest', 'application/manifest+json; charset=utf-8'],
 };
+for (const icon of ['icon-192', 'icon-512', 'icon-maskable-512', 'apple-touch-icon']) {
+  files[`/assets/icons/${icon}.png`] = [`assets/icons/${icon}.png`, 'image/png'];
+}
 for (const muscle of ['shoulders', 'chest', 'back', 'legs', 'core', 'arms', 'cardio', 'lat-pulldown', 'dumbbell-shrug', 'seated-cable-row', 'pull-up', 'plank', 'ab-rollout', 'russian-twists', 'leg-raises', 'crunches', 'mountain-climber', 'bicycle-crunches', 'leg-extension', 'leg-press', 'hack-squat', 'leg-curl', 'dumbbell-lunge', 'seated-calf-raise', 'dumbbell-press', 'dumbbell-lateral-raise', 'cable-lateral-raise', 'rear-delt-cable-fly', 'face-pull', 'dumbbell-upright-row', 'hammer-grip-shoulder-press', 'dumbbell-bench-press', 'machine-chest-press', 'dumbbell-fly', 'pec-deck-fly', 'low-cable-fly', 'high-cable-fly', 'push-ups', 'dumbbell-curl', 'cable-curl', 'barbell-curl', 'dumbbell-hammer-curl', 'cable-pushdown', 'cable-overhead-extension', 'dumbbell-triceps-kickback', 'incline-treadmill-walk', 'treadmill-run']) {
   files[`/assets/muscles/${muscle}.png`] = [`assets/muscles/${muscle}.png`, 'image/png'];
 }

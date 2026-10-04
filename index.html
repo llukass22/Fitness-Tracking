@@ -5,8 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#101110" />
   <meta name="description" content="A simple home for your gym sessions." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="tracked." />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png" />
   <title>tracked. — Your training space</title>
   <link rel="stylesheet" href="styles.css" />
+  <script src="/pwa.js" defer></script>
 </head>
 <body>
   <svg class="svg-library" xmlns="http://www.w3.org/2000/svg"><defs>
@@ -24,7 +30,7 @@
     <header class="site-header">
       <a class="brand" href="./" aria-label="tracked home"><span class="brand-mark"><i></i><i></i><i></i></span>tracked<span class="brand-dot">.</span></a>
       <span class="header-label">YOUR TRAINING SPACE</span>
-      <div class="account-controls"><span id="account-email"></span><button id="refresh-workouts" type="button" hidden>Refresh</button><button id="sign-out" type="button" hidden>Sign out</button></div>
+      <div class="account-controls"><button id="install-app" type="button" hidden>Install app</button><span id="account-email"></span><button id="refresh-workouts" type="button" hidden>Refresh</button><button id="sign-out" type="button" hidden>Sign out</button></div>
     </header>
     <section class="account-card" id="account-card" aria-labelledby="account-title">
       <h1 id="account-title">Your training, everywhere.</h1>
