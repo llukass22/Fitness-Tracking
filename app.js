@@ -176,10 +176,11 @@ function renderCalendar() {
 function renderWorkout() {
   document.getElementById('submission-confirmation').hidden = true;
   document.getElementById('workout-removal-status').textContent = '';
-  document.getElementById('workout-date').textContent = dateLabel(selectedDate);
   document.getElementById('training-date').textContent = `Training for ${dateLabel(selectedDate)}`;
   const entries = workouts[dateKey(selectedDate)];
   const hasEntries = Array.isArray(entries) && entries.length > 0;
+  const muscleGroups = hasEntries ? [...new Set(entries.map(entry => entry.muscle).filter(Boolean))] : [];
+  document.getElementById('workout-date').textContent = dateLabel(selectedDate) + (muscleGroups.length ? `. ${muscleGroups.join(', ')}` : '');
   document.querySelector('.workout-details').classList.toggle('has-entries', hasEntries);
   const list = document.getElementById('workout-entries');
   list.replaceChildren();
