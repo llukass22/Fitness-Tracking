@@ -113,4 +113,7 @@ body.modal-open{overflow:hidden}.exercise-modal[hidden]{display:none}.exercise-m
   .account-controls span:empty{display:none}
   .account-controls button{min-width:0}
   .account-controls #install-app:not([hidden]){grid-column:1/-1}
+  .weekly-workout-heading h2{font-size:20px}
+  .weekly-workout-range{font-size:16px}
+  .workout-details #workout-entries{font-size:20px}
 }
